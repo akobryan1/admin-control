@@ -410,15 +410,15 @@
           console.log(`[DEBUG] course ${courseDocId} submissions:`, submissionsSnap.size);
 
           for (const submissionDoc of submissionsSnap.docs) {
-            const attemptsRef = collection(
-              db,
-              finalsExamCollectionName,
-              courseDocId,
-              submissionsSubcollection,
-              submissionDoc.id,
-              attemptsSubcollection
-            );
-            const attemptsSnap = await getDocs(attemptsRef);
+            const studentData = submissionDoc.data();
+              records.push({
+              course: studentData.Course ?? courseDocId,
+              section: studentData.Section ?? "No Section",
+              name: studentData.Name ?? "Unknown",
+              score: studentData.Score ?? 0,
+              attemptId: submissionDoc.id
+            });
+
             console.log(
               `[DEBUG] course ${courseDocId} submission ${submissionDoc.id} attempts:`,
               attemptsSnap.size
