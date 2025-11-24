@@ -1,19 +1,15 @@
 <!doctype html>
 <html lang="en">
 <head>
-  <meta http-equiv="Cache-Control" content="no-cache, no-store, must-revalidate" />
-<meta http-equiv="Pragma" content="no-cache" />
-<meta http-equiv="Expires" content="0" />
-<meta name="version" content="4">
-
   <meta charset="utf-8" />
   <title>Final Exam Results Viewer</title>
   <meta name="viewport" content="width=device-width, initial-scale=1" />
 
-  <!-- Cache busting to fight GitHub Pages caching old HTML -->
+  <!-- Cache busting to fight GitHub / browser cache -->
   <meta http-equiv="Cache-Control" content="no-cache, no-store, must-revalidate" />
   <meta http-equiv="Pragma" content="no-cache" />
   <meta http-equiv="Expires" content="0" />
+  <meta name="version" content="build-ansci-root-submissions-1">
 
   <style>
     :root {
@@ -312,7 +308,7 @@
     <header>
       <h1>Final Exam Submissions</h1>
       <div class="subtitle">
-        Viewer for <code>finals-exam / [Course] / submissions / [Student]</code>
+        Viewer for <code>submissions / [AutoID]</code> grouped by Course &amp; Section
       </div>
     </header>
 
@@ -372,7 +368,7 @@
     console.log("[DEBUG] Firebase app initialized:", app.name);
 
     const finalsExamCollectionName = "finals-exam";
-    const submissionsSubcollection = "submissions";
+    const rootSubmissionsCollectionName = "submissions"; // top-level collection
 
     const dataContainer = document.getElementById("dataContainer");
     const statusText = document.getElementById("statusText");
@@ -410,57 +406,46 @@
         setStatus("Loading data from Firestore…");
         const records = [];
 
+        // DEBUG ONLY: check finals-exam collection (we know it's returning 0)
         const finalsColRef = collection(db, finalsExamCollectionName);
         console.log("[DEBUG] finalsColRef path:", finalsColRef.path);
-
         const finalsSnap = await getDocs(finalsColRef);
         console.log("[DEBUG] finals-exam doc count:", finalsSnap.size);
-        finalsSnap.forEach(doc => console.log("[DEBUG] course doc id:", doc.id));
 
-        for (const courseDoc of finalsSnap.docs) {
-          const courseDocId = courseDoc.id;
-          console.log(`[DEBUG] Processing course: ${courseDocId}`);
+        // ACTUAL DATA SOURCE: top-level "submissions" collection
+        const rootSubsRef = collection(db, rootSubmissionsCollectionName);
+        console.log("[DEBUG] root submissions path:", rootSubsRef.path);
+        const rootSubsSnap = await getDocs(rootSubsRef);
+        console.log("[DEBUG] root submissions doc count:", rootSubsSnap.size);
 
-          const submissionsRef = collection(
-            db,
-            finalsExamCollectionName,
-            courseDocId,
-            submissionsSubcollection
+        for (const submissionDoc of rootSubsSnap.docs) {
+          const studentData = submissionDoc.data();
+          console.log(
+            "[DEBUG] root submission doc",
+            submissionDoc.id,
+            "data:",
+            studentData
           );
-          console.log("[DEBUG] submissionsRef path:", submissionsRef.path);
 
-          const submissionsSnap = await getDocs(submissionsRef);
-          console.log(`[DEBUG] course ${courseDocId} submissions count:`, submissionsSnap.size);
+          const name = studentData.Name ?? studentData.name ?? "Unknown";
+          const course = studentData.Course ?? studentData.course ?? "No Course";
+          const section = studentData.Section ?? studentData.section ?? "No Section";
 
-          for (const submissionDoc of submissionsSnap.docs) {
-            const studentData = submissionDoc.data();
-            console.log(
-              "[DEBUG] student doc",
-              submissionDoc.id,
-              "data:",
-              studentData
-            );
+          const score =
+            typeof studentData.Score === "number"
+              ? studentData.Score
+              : parseFloat(studentData.Score ?? "0") || 0;
 
-            const name = studentData.Name ?? studentData.name ?? "Unknown";
-            const course = studentData.Course ?? studentData.course ?? courseDocId;
-            const section = studentData.Section ?? studentData.section ?? "No Section";
-
-            const score =
-              typeof studentData.Score === "number"
-                ? studentData.Score
-                : parseFloat(studentData.Score ?? "0") || 0;
-
-            records.push({
-              course,
-              section,
-              name,
-              score,
-              attemptId: submissionDoc.id
-            });
-          }
+          records.push({
+            course,
+            section,
+            name,
+            score,
+            attemptId: submissionDoc.id
+          });
         }
 
-        console.log("[DEBUG] total records gathered:", records.length);
+        console.log("[DEBUG] total records gathered from root submissions:", records.length);
 
         if (!records.length) {
           setStatus("No data found.", false);
