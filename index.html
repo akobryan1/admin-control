@@ -9,7 +9,7 @@
   <meta http-equiv="Cache-Control" content="no-cache, no-store, must-revalidate" />
   <meta http-equiv="Pragma" content="no-cache" />
   <meta http-equiv="Expires" content="0" />
-  <meta name="version" content="build-ansci-root-submissions-1">
+  <meta name="version" content="build-ansci-finals-exam-A-1">
 
   <style>
     :root {
@@ -308,7 +308,7 @@
     <header>
       <h1>Final Exam Submissions</h1>
       <div class="subtitle">
-        Viewer for <code>submissions / [AutoID]</code> grouped by Course &amp; Section
+        Viewer for <code>finals-exam / [CourseDoc] / submissions / [StudentDoc] / attempts</code>
       </div>
     </header>
 
@@ -350,7 +350,6 @@
 
     console.log("[DEBUG] Script loaded, starting Firebase init…");
 
-    // YOUR FIREBASE CONFIG
     const firebaseConfig = {
       apiKey: "AIzaSyB-idZOq8h9sVttNdzXE2t8FMoYI_snq7g",
       authDomain: "kuya-quiz-100.firebaseapp.com",
@@ -368,7 +367,8 @@
     console.log("[DEBUG] Firebase app initialized:", app.name);
 
     const finalsExamCollectionName = "finals-exam";
-    const rootSubmissionsCollectionName = "submissions"; // top-level collection
+    const submissionsSubcollection = "submissions";
+    const attemptsSubcollection = "attempts";
 
     const dataContainer = document.getElementById("dataContainer");
     const statusText = document.getElementById("statusText");
@@ -406,46 +406,135 @@
         setStatus("Loading data from Firestore…");
         const records = [];
 
-        // DEBUG ONLY: check finals-exam collection (we know it's returning 0)
         const finalsColRef = collection(db, finalsExamCollectionName);
         console.log("[DEBUG] finalsColRef path:", finalsColRef.path);
+
         const finalsSnap = await getDocs(finalsColRef);
         console.log("[DEBUG] finals-exam doc count:", finalsSnap.size);
+        finalsSnap.forEach(doc => console.log("  [COURSE DOC]", doc.id));
 
-        // ACTUAL DATA SOURCE: top-level "submissions" collection
-        const rootSubsRef = collection(db, rootSubmissionsCollectionName);
-        console.log("[DEBUG] root submissions path:", rootSubsRef.path);
-        const rootSubsSnap = await getDocs(rootSubsRef);
-        console.log("[DEBUG] root submissions doc count:", rootSubsSnap.size);
+        for (const courseDoc of finalsSnap.docs) {
+          const courseDocId = courseDoc.id;
+          console.log(`\n[DEBUG] Processing courseDoc: ${courseDocId}`);
 
-        for (const submissionDoc of rootSubsSnap.docs) {
-          const studentData = submissionDoc.data();
+          const submissionsRef = collection(
+            db,
+            finalsExamCollectionName,
+            courseDocId,
+            submissionsSubcollection
+          );
+          console.log("  [DEBUG] submissionsRef path:", submissionsRef.path);
+
+          const submissionsSnap = await getDocs(submissionsRef);
           console.log(
-            "[DEBUG] root submission doc",
-            submissionDoc.id,
-            "data:",
-            studentData
+            `  [DEBUG] course ${courseDocId} submissions count:`,
+            submissionsSnap.size
           );
 
-          const name = studentData.Name ?? studentData.name ?? "Unknown";
-          const course = studentData.Course ?? studentData.course ?? "No Course";
-          const section = studentData.Section ?? studentData.section ?? "No Section";
+          for (const submissionDoc of submissionsSnap.docs) {
+            const submissionId = submissionDoc.id;
+            const subData = submissionDoc.data() || {};
+            console.log(
+              `    [DEBUG] submissionDoc ${submissionId} data keys:`,
+              Object.keys(subData)
+            );
 
-          const score =
-            typeof studentData.Score === "number"
-              ? studentData.Score
-              : parseFloat(studentData.Score ?? "0") || 0;
+            // CASE 1: Student data is directly on the submission document
+            if (
+              subData.Name ||
+              subData.name ||
+              subData.Score ||
+              subData.Course ||
+              subData.course
+            ) {
+              const name =
+                subData.Name ??
+                subData.name ??
+                "Unknown";
+              const course =
+                subData.Course ??
+                subData.course ??
+                courseDocId;
+              const section =
+                subData.Section ??
+                subData.section ??
+                "No Section";
 
-          records.push({
-            course,
-            section,
-            name,
-            score,
-            attemptId: submissionDoc.id
-          });
+              const score =
+                typeof subData.Score === "number"
+                  ? subData.Score
+                  : parseFloat(subData.Score ?? "0") || 0;
+
+              records.push({
+                course,
+                section,
+                name,
+                score,
+                attemptId: submissionId
+              });
+
+              console.log(
+                `      [DEBUG] Added DIRECT record from submission ${submissionId}:`,
+                { name, course, section, score }
+              );
+            }
+
+            // CASE 2: Student data is inside attempts subcollection
+            const attemptsRef = collection(
+              db,
+              finalsExamCollectionName,
+              courseDocId,
+              submissionsSubcollection,
+              submissionId,
+              attemptsSubcollection
+            );
+            console.log("      [DEBUG] attemptsRef path:", attemptsRef.path);
+
+            const attemptsSnap = await getDocs(attemptsRef);
+            console.log(
+              `      [DEBUG] submission ${submissionId} attempts count:`,
+              attemptsSnap.size
+            );
+
+            for (const attemptDoc of attemptsSnap.docs) {
+              const attemptId = attemptDoc.id;
+              const data = attemptDoc.data() || {};
+
+              const name =
+                data.Name ??
+                data.name ??
+                "Unknown";
+              const course =
+                data.Course ??
+                data.course ??
+                courseDocId;
+              const section =
+                data.Section ??
+                data.section ??
+                "No Section";
+
+              const score =
+                typeof data.Score === "number"
+                  ? data.Score
+                  : parseFloat(data.Score ?? "0") || 0;
+
+              records.push({
+                course,
+                section,
+                name,
+                score,
+                attemptId: attemptId
+              });
+
+              console.log(
+                `        [DEBUG] Added ATTEMPT record from ${submissionId}/${attemptId}:`,
+                { name, course, section, score }
+              );
+            }
+          }
         }
 
-        console.log("[DEBUG] total records gathered from root submissions:", records.length);
+        console.log("[DEBUG] total records gathered:", records.length);
 
         if (!records.length) {
           setStatus("No data found.", false);
@@ -535,7 +624,7 @@
           inner.className = "section-inner";
           inner.innerHTML = `
             <div class="section-caption">
-              Click column headers to sort. Use the search box above to filter.
+              Use the search box above to filter by name, course, or section.
             </div>
           `;
 
