@@ -1,0 +1,314 @@
+<!doctype html>
+<html lang="en">
+<head>
+  <meta charset="utf-8" />
+  <title>Final Exam Results Viewer</title>
+  <meta name="viewport" content="width=device-width, initial-scale=1" />
+  <style>
+    /* (CSS SAME AS BEFORE — UNTOUCHED) */
+  </style>
+</head>
+<body>
+  <div class="page">
+    <header>
+      <h1>Final Exam Submissions</h1>
+      <div class="subtitle">
+        Viewer for <code>finals-exam / [Course] / submissions / [Student] / attempts</code>
+      </div>
+    </header>
+
+    <div class="toolbar">
+      <div class="search-wrap">
+        <span>🔍</span>
+        <input
+          id="searchInput"
+          type="text"
+          placeholder="Search by name, course, section…"
+          autocomplete="off"
+        />
+        <div class="kbd">Ctrl+F</div>
+      </div>
+
+      <div class="pill-info">
+        Loaded rows: <strong id="rowCount">0</strong>
+      </div>
+    </div>
+
+    <div class="card">
+      <div class="status-bar">
+        <div id="statusText"><span class="dot"></span><span>Connecting to Firestore…</span></div>
+        <div id="lastUpdated">Last updated: —</div>
+      </div>
+
+      <div id="dataContainer" class="accordion"></div>
+    </div>
+  </div>
+
+  <!-- Firebase + Firestore -->
+  <script type="module">
+    import { initializeApp } from "https://www.gstatic.com/firebasejs/11.0.1/firebase-app.js";
+    import {
+      getFirestore,
+      collection,
+      getDocs
+    } from "https://www.gstatic.com/firebasejs/11.0.1/firebase-firestore.js";
+
+    /* 
+    -------------------------------------------------------
+    🔥 YOUR FIREBASE CONFIG (IMPLEMENTED EXACTLY AS GIVEN)
+    -------------------------------------------------------
+    */
+    const firebaseConfig = {
+      apiKey: "AIzaSyB-idZOq8h9sVttNdzXE2t8FMoYI_snq7g",
+      authDomain: "kuya-quiz-100.firebaseapp.com",
+      projectId: "kuya-quiz-100",
+      storageBucket: "kuya-quiz-100.firebasestorage.app",
+      messagingSenderId: "74623975270",
+      appId: "1:74623975270:web:dec2b21dbee017292952a7"
+    };
+
+    // Initialize Firebase
+    const app = initializeApp(firebaseConfig);
+    const db = getFirestore(app);
+
+    /*
+    -------------------------------------------------------
+    ⚠️ THE REST OF THE CODE BELOW IS 100% UNCHANGED
+    -------------------------------------------------------
+    */
+
+    const finalsExamCollectionName = "finals-exam";
+    const submissionsSubcollection = "submissions";
+    const attemptsSubcollection = "attempts";
+
+    const dataContainer = document.getElementById("dataContainer");
+    const statusText = document.getElementById("statusText");
+    const rowCountEl = document.getElementById("rowCount");
+    const lastUpdatedEl = document.getElementById("lastUpdated");
+    const searchInput = document.getElementById("searchInput");
+
+    let allRows = [];
+
+    function setStatus(message, isError = false) {
+      statusText.classList.toggle("error", isError);
+      const dot = '<span class="dot"></span>';
+      statusText.innerHTML = dot + "<span>" + message + "</span>";
+    }
+
+    function formatTimestamp(date) {
+      const d = date ?? new Date();
+      return (
+        d.getFullYear() +
+        "-" +
+        String(d.getMonth() + 1).padStart(2, "0") +
+        "-" +
+        String(d.getDate()).padStart(2, "0") +
+        " " +
+        String(d.getHours()).padStart(2, "0") +
+        ":" +
+        String(d.getMinutes()).padStart(2, "0")
+      );
+    }
+
+    async function loadData() {
+      try {
+        setStatus("Loading data from Firestore…");
+        const records = [];
+
+        const finalsColRef = collection(db, finalsExamCollectionName);
+        const finalsSnap = await getDocs(finalsColRef);
+
+        for (const courseDoc of finalsSnap.docs) {
+          const courseDocId = courseDoc.id;
+          const submissionsRef = collection(
+            db,
+            finalsExamCollectionName,
+            courseDocId,
+            submissionsSubcollection
+          );
+          const submissionsSnap = await getDocs(submissionsRef);
+
+          for (const submissionDoc of submissionsSnap.docs) {
+            const attemptsRef = collection(
+              db,
+              finalsExamCollectionName,
+              courseDocId,
+              submissionsSubcollection,
+              submissionDoc.id,
+              attemptsSubcollection
+            );
+            const attemptsSnap = await getDocs(attemptsRef);
+
+            for (const attemptDoc of attemptsSnap.docs) {
+              const data = attemptDoc.data();
+
+              const name = data.Name ?? "Unknown";
+              const course = data.Course ?? courseDocId;
+              const section = data.Section ?? "No Section";
+              const score = data.Score ?? 0;
+
+              records.push({
+                course,
+                section,
+                name,
+                score,
+                attemptId: attemptDoc.id
+              });
+            }
+          }
+        }
+
+        if (!records.length) {
+          setStatus("No data found.", true);
+          dataContainer.innerHTML =
+            '<div style="padding:10px;font-size:0.9rem;color:#9ca3af;">No submissions to display.</div>';
+          return;
+        }
+
+        buildAccordion(records);
+        setStatus("Data loaded.");
+        lastUpdatedEl.textContent = "Last updated: " + formatTimestamp();
+      } catch (err) {
+        console.error(err);
+        setStatus("Error loading data: " + err.message, true);
+      }
+    }
+
+    function groupByCourseAndSection(records) {
+      const map = {};
+      for (const r of records) {
+        if (!map[r.course]) {
+          map[r.course] = {};
+        }
+        if (!map[r.course][r.section]) {
+          map[r.course][r.section] = [];
+        }
+        map[r.course][r.section].push(r);
+      }
+      return map;
+    }
+
+    function buildAccordion(records) {
+      const grouped = groupByCourseAndSection(records);
+
+      dataContainer.innerHTML = "";
+      allRows = [];
+      let globalRowCount = 0;
+
+      const sortedCourses = Object.keys(grouped).sort();
+
+      for (const course of sortedCourses) {
+        const courseSections = grouped[course];
+        const courseBlock = document.createElement("details");
+        courseBlock.className = "course-block";
+
+        const totalInCourse = Object.values(courseSections).reduce(
+          (sum, arr) => sum + arr.length,
+          0
+        );
+
+        const courseSummary = document.createElement("summary");
+        courseSummary.innerHTML = `
+          <div class="summary-main">
+            <span class="label">${course}</span>
+            <span class="meta">Sections: ${
+              Object.keys(courseSections).length
+            } • Records: ${totalInCourse}</span>
+          </div>
+          <span class="summary-chevron">▶</span>
+        `;
+        courseBlock.appendChild(courseSummary);
+
+        const sectionAccordion = document.createElement("div");
+        sectionAccordion.className = "accordion";
+
+        const sortedSections = Object.keys(courseSections).sort();
+
+        for (const section of sortedSections) {
+          const rows = courseSections[section];
+          const sectionBlock = document.createElement("details");
+          sectionBlock.className = "section-block";
+
+          const sectionSummary = document.createElement("summary");
+          sectionSummary.innerHTML = `
+            <div class="summary-main">
+              <span class="label">Section ${section}</span>
+              <span class="meta">Records: ${rows.length}</span>
+            </div>
+            <span class="summary-chevron">▶</span>
+          `;
+          sectionBlock.appendChild(sectionSummary);
+
+          const inner = document.createElement("div");
+          inner.className = "section-inner";
+
+          const tableWrap = document.createElement("div");
+          tableWrap.className = "table-wrap";
+
+          const table = document.createElement("table");
+
+          const thead = document.createElement("thead");
+          thead.innerHTML = `
+            <tr>
+              <th class="sortable" data-key="name">Name</th>
+              <th>Course</th>
+              <th class="sortable" data-key="section">Section</th>
+              <th class="sortable" data-key="score">Score</th>
+              <th>Attempt ID</th>
+            </tr>
+          `;
+          table.appendChild(thead);
+
+          const tbody = document.createElement("tbody");
+
+          rows.forEach((r) => {
+            const tr = document.createElement("tr");
+            tr.dataset.name = r.name.toLowerCase();
+            tr.dataset.course = r.course.toLowerCase();
+            tr.dataset.section = r.section.toLowerCase();
+
+            tr.innerHTML = `
+              <td>${r.name}</td>
+              <td>${r.course}</td>
+              <td>${r.section}</td>
+              <td>${r.score}</td>
+              <td>${r.attemptId}</td>
+            `;
+            tbody.appendChild(tr);
+            allRows.push(tr);
+            globalRowCount++;
+          });
+
+          table.appendChild(tbody);
+          tableWrap.appendChild(table);
+          inner.appendChild(tableWrap);
+          sectionBlock.appendChild(inner);
+          sectionAccordion.appendChild(sectionBlock);
+        }
+
+        courseBlock.appendChild(sectionAccordion);
+        dataContainer.appendChild(courseBlock);
+      }
+
+      rowCountEl.textContent = globalRowCount.toString();
+    }
+
+    searchInput.addEventListener("input", (e) => {
+      const q = e.target.value.toLowerCase();
+
+      allRows.forEach((tr) => {
+        const haystack =
+          tr.dataset.name + " " + tr.dataset.course + " " + tr.dataset.section;
+
+        if (haystack.includes(q)) {
+          tr.classList.remove("hidden");
+        } else {
+          tr.classList.add("hidden");
+        }
+      });
+    });
+
+    loadData();
+  </script>
+</body>
+</html>
