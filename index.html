@@ -4,6 +4,12 @@
   <meta charset="utf-8" />
   <title>Final Exam Results Viewer</title>
   <meta name="viewport" content="width=device-width, initial-scale=1" />
+
+  <!-- Cache busting to fight GitHub Pages caching old HTML -->
+  <meta http-equiv="Cache-Control" content="no-cache, no-store, must-revalidate" />
+  <meta http-equiv="Pragma" content="no-cache" />
+  <meta http-equiv="Expires" content="0" />
+
   <style>
     :root {
       --bg: #020617;
@@ -20,7 +26,9 @@
       --shadow-soft: 0 20px 45px rgba(15, 23, 42, 0.8);
     }
 
-    * { box-sizing: border-box; }
+    * {
+      box-sizing: border-box;
+    }
 
     body {
       margin: 0;
@@ -37,7 +45,9 @@
       padding: 20px 16px 40px;
     }
 
-    header { margin-bottom: 20px; }
+    header {
+      margin-bottom: 20px;
+    }
 
     h1 {
       margin: 0 0 4px;
@@ -69,20 +79,25 @@
       padding: 9px 32px 9px 32px;
       border-radius: 999px;
       border: 1px solid var(--border-soft);
-      background: radial-gradient(circle at top left,
+      background: radial-gradient(
+          circle at top left,
           rgba(148, 163, 184, 0.25) 0,
           rgba(30, 64, 175, 0.02) 40%,
-          rgba(15, 23, 42, 0.9) 100%);
+          rgba(15, 23, 42, 0.9) 100%
+        );
       color: var(--text);
       outline: none;
       font-size: 0.9rem;
     }
 
-    .search-wrap input::placeholder { color: #64748b; }
+    .search-wrap input::placeholder {
+      color: #64748b;
+    }
 
     .search-wrap span {
       position: absolute;
-      left: 10px; top: 50%;
+      left: 10px;
+      top: 50%;
       transform: translateY(-50%);
       font-size: 0.9rem;
       color: #64748b;
@@ -90,7 +105,8 @@
 
     .search-wrap .kbd {
       position: absolute;
-      right: 12px; top: 50%;
+      right: 12px;
+      top: 50%;
       transform: translateY(-50%);
       font-size: 0.7rem;
       padding: 2px 6px;
@@ -108,39 +124,43 @@
       color: #cbd5f5;
     }
 
-    .pill-info strong { color: var(--accent); }
+    .pill-info strong {
+      color: var(--accent);
+    }
 
     .card {
       border-radius: var(--radius-lg);
       padding: 16px 14px 10px;
       background:
-        radial-gradient(circle at top left, rgba(56,189,248,0.16), transparent 55%),
-        radial-gradient(circle at bottom right, rgba(37,99,235,0.28), #020617 70%);
+        radial-gradient(circle at top left, rgba(56, 189, 248, 0.16), transparent 55%),
+        radial-gradient(circle at bottom right, rgba(37, 99, 235, 0.28), #020617 70%);
       box-shadow: var(--shadow-soft);
-      border: 1px solid rgba(15,23,42,0.85);
+      border: 1px solid rgba(15, 23, 42, 0.85);
     }
 
     .status-bar {
       display: flex;
       justify-content: space-between;
       gap: 8px;
-      font-size: 0.8rem;
+      align-items: center;
       margin-bottom: 8px;
+      font-size: 0.8rem;
       color: var(--muted);
     }
 
     #statusText span.dot {
       display: inline-block;
-      width: 7px; height: 7px;
+      width: 7px;
+      height: 7px;
       border-radius: 999px;
       margin-right: 6px;
       background: var(--accent);
-      box-shadow: 0 0 7px rgba(45,212,191,0.9);
+      box-shadow: 0 0 7px rgba(45, 212, 191, 0.9);
     }
 
     #statusText.error span.dot {
       background: var(--danger);
-      box-shadow: 0 0 7px rgba(248,113,113,0.9);
+      box-shadow: 0 0 7px rgba(248, 113, 113, 0.9);
     }
 
     .accordion {
@@ -150,12 +170,19 @@
       gap: 10px;
     }
 
-    details.course-block, details.section-block {
+    details.course-block,
+    details.section-block {
       border-radius: var(--radius-md);
-      border: 1px solid rgba(148,163,184,0.35);
-      background: rgba(15,23,42,0.8);
+      border: 1px solid rgba(148, 163, 184, 0.35);
+      background: rgba(15, 23, 42, 0.8);
       padding: 0;
       overflow: hidden;
+    }
+
+    details.course-block[open],
+    details.section-block[open] {
+      border-color: rgba(56, 189, 248, 0.7);
+      box-shadow: 0 0 0 1px rgba(56, 189, 248, 0.25);
     }
 
     details > summary {
@@ -163,15 +190,21 @@
       padding: 9px 12px;
       cursor: pointer;
       display: flex;
+      align-items: center;
       justify-content: space-between;
+      gap: 8px;
       user-select: none;
+    }
+
+    details > summary::-webkit-details-marker {
+      display: none;
     }
 
     .summary-main {
       display: flex;
+      align-items: baseline;
       gap: 6px;
       font-size: 0.92rem;
-      align-items: baseline;
     }
 
     .summary-main .label {
@@ -187,6 +220,7 @@
     .summary-chevron {
       font-size: 0.85rem;
       color: #64748b;
+      margin-left: 4px;
       transition: transform 0.18s ease;
     }
 
@@ -197,12 +231,11 @@
 
     .section-inner {
       padding: 4px 10px 10px;
-      border-top: 1px solid rgba(15,23,42,0.9);
-      background: radial-gradient(circle at top left,
-          rgba(148,163,184,0.16), transparent 60%);
+      border-top: 1px solid rgba(15, 23, 42, 0.9);
+      background: radial-gradient(circle at top left, rgba(148, 163, 184, 0.16), transparent 60%);
     }
 
-    .section-caption {
+    .section-inner .section-caption {
       font-size: 0.8rem;
       color: var(--muted);
       margin: 2px 0 6px;
@@ -211,8 +244,8 @@
     .table-wrap {
       overflow-x: auto;
       border-radius: 10px;
-      border: 1px solid rgba(31,41,55,0.9);
-      background: rgba(15,23,42,0.88);
+      border: 1px solid rgba(31, 41, 55, 0.9);
+      background: rgba(15, 23, 42, 0.88);
     }
 
     table {
@@ -223,31 +256,52 @@
     }
 
     thead {
-      background: linear-gradient(to right,
-        rgba(15,23,42,0.9), #020617);
+      background: linear-gradient(to right, rgba(15, 23, 42, 0.9), #020617);
     }
 
-    th, td {
+    th,
+    td {
       padding: 8px 10px;
-      border-bottom: 1px solid rgba(30,41,59,0.7);
+      text-align: left;
+      border-bottom: 1px solid rgba(30, 41, 59, 0.7);
       white-space: nowrap;
     }
 
     th {
       font-weight: 500;
+      color: #e5e7eb;
       position: sticky;
       top: 0;
+      background: linear-gradient(to right, rgba(15, 23, 42, 0.96), #020617);
       z-index: 2;
     }
 
-    tbody tr:nth-child(even) { background: rgba(15,23,42,0.75); }
-    tbody tr:nth-child(odd)  { background: rgba(15,23,42,0.45); }
-    tbody tr:hover { background: rgba(30,64,175,0.35); }
+    tbody tr:nth-child(even) {
+      background: rgba(15, 23, 42, 0.75);
+    }
 
-    .hidden { display: none !important; }
+    tbody tr:nth-child(odd) {
+      background: rgba(15, 23, 42, 0.45);
+    }
+
+    tbody tr:hover {
+      background: rgba(30, 64, 175, 0.35);
+    }
+
+    .hidden {
+      display: none !important;
+    }
+
+    @media (max-width: 640px) {
+      h1 {
+        font-size: 1.3rem;
+      }
+      .card {
+        padding: 14px 10px 10px;
+      }
+    }
   </style>
 </head>
-
 <body>
   <div class="page">
     <header>
@@ -260,7 +314,12 @@
     <div class="toolbar">
       <div class="search-wrap">
         <span>🔍</span>
-        <input id="searchInput" type="text" placeholder="Search..." autocomplete="off" />
+        <input
+          id="searchInput"
+          type="text"
+          placeholder="Search by name, course, section…"
+          autocomplete="off"
+        />
         <div class="kbd">Ctrl+F</div>
       </div>
 
@@ -271,7 +330,7 @@
 
     <div class="card">
       <div class="status-bar">
-        <div id="statusText"><span class="dot"></span><span>Connecting…</span></div>
+        <div id="statusText"><span class="dot"></span><span>Connecting to Firestore…</span></div>
         <div id="lastUpdated">Last updated: —</div>
       </div>
 
@@ -279,7 +338,7 @@
     </div>
   </div>
 
-  <!-- FIREBASE -->
+  <!-- Firebase + Firestore -->
   <script type="module">
     import { initializeApp } from "https://www.gstatic.com/firebasejs/11.0.1/firebase-app.js";
     import {
@@ -288,7 +347,9 @@
       getDocs
     } from "https://www.gstatic.com/firebasejs/11.0.1/firebase-firestore.js";
 
-    // FIREBASE CONFIG
+    console.log("[DEBUG] Script loaded, starting Firebase init…");
+
+    // YOUR FIREBASE CONFIG
     const firebaseConfig = {
       apiKey: "AIzaSyB-idZOq8h9sVttNdzXE2t8FMoYI_snq7g",
       authDomain: "kuya-quiz-100.firebaseapp.com",
@@ -298,8 +359,15 @@
       appId: "1:74623975270:web:dec2b21dbee017292952a7"
     };
 
+    console.log("[DEBUG] firebaseConfig:", firebaseConfig);
+
     const app = initializeApp(firebaseConfig);
     const db = getFirestore(app);
+
+    console.log("[DEBUG] Firebase app initialized:", app.name);
+
+    const finalsExamCollectionName = "finals-exam";
+    const submissionsSubcollection = "submissions";
 
     const dataContainer = document.getElementById("dataContainer");
     const statusText = document.getElementById("statusText");
@@ -309,123 +377,183 @@
 
     let allRows = [];
 
-    function setStatus(msg, err = false) {
-      statusText.classList.toggle("error", err);
-      statusText.innerHTML = `<span class="dot"></span><span>${msg}</span>`;
+    function setStatus(message, isError = false) {
+      statusText.classList.toggle("error", isError);
+      const dot = '<span class="dot"></span>';
+      statusText.innerHTML = dot + "<span>" + message + "</span>";
+      console.log("[STATUS]", message);
     }
 
-    function formatTime(d = new Date()) {
+    function formatTimestamp(date) {
+      const d = date ?? new Date();
       return (
-        d.getFullYear() + "-" +
-        String(d.getMonth()+1).padStart(2,"0") + "-" +
-        String(d.getDate()).padStart(2,"0") + " " +
-        String(d.getHours()).padStart(2,"0") + ":" +
-        String(d.getMinutes()).padStart(2,"0")
+        d.getFullYear() +
+        "-" +
+        String(d.getMonth() + 1).padStart(2, "0") +
+        "-" +
+        String(d.getDate()).padStart(2, "0") +
+        " " +
+        String(d.getHours()).padStart(2, "0") +
+        ":" +
+        String(d.getMinutes()).padStart(2, "0")
       );
     }
 
     async function loadData() {
       try {
-        setStatus("Loading data from Firestore...");
+        console.log("[DEBUG] loadData() started");
+        setStatus("Loading data from Firestore…");
         const records = [];
 
-        const finalsRef = collection(db, "finals-exam");
-        const finalsSnap = await getDocs(finalsRef);
+        const finalsColRef = collection(db, finalsExamCollectionName);
+        console.log("[DEBUG] finalsColRef path:", finalsColRef.path);
 
-        finalsSnap.forEach(doc => console.log("Course:", doc.id));
+        const finalsSnap = await getDocs(finalsColRef);
+        console.log("[DEBUG] finals-exam doc count:", finalsSnap.size);
+        finalsSnap.forEach(doc => console.log("[DEBUG] course doc id:", doc.id));
 
         for (const courseDoc of finalsSnap.docs) {
-          const courseId = courseDoc.id;
+          const courseDocId = courseDoc.id;
+          console.log(`[DEBUG] Processing course: ${courseDocId}`);
 
-          const submissionsRef = collection(db, "finals-exam", courseId, "submissions");
+          const submissionsRef = collection(
+            db,
+            finalsExamCollectionName,
+            courseDocId,
+            submissionsSubcollection
+          );
+          console.log("[DEBUG] submissionsRef path:", submissionsRef.path);
+
           const submissionsSnap = await getDocs(submissionsRef);
+          console.log(`[DEBUG] course ${courseDocId} submissions count:`, submissionsSnap.size);
 
           for (const submissionDoc of submissionsSnap.docs) {
-            const data = submissionDoc.data();
+            const studentData = submissionDoc.data();
+            console.log(
+              "[DEBUG] student doc",
+              submissionDoc.id,
+              "data:",
+              studentData
+            );
+
+            const name = studentData.Name ?? studentData.name ?? "Unknown";
+            const course = studentData.Course ?? studentData.course ?? courseDocId;
+            const section = studentData.Section ?? studentData.section ?? "No Section";
+
+            const score =
+              typeof studentData.Score === "number"
+                ? studentData.Score
+                : parseFloat(studentData.Score ?? "0") || 0;
 
             records.push({
-              course: data.Course ?? courseId,
-              section: data.Section ?? "No Section",
-              name: data.Name ?? "Unknown",
-              score: data.Score ?? 0,
+              course,
+              section,
+              name,
+              score,
               attemptId: submissionDoc.id
             });
           }
         }
 
-        if (records.length === 0) {
-          setStatus("No data found.");
-          dataContainer.innerHTML = `<div style="padding:10px;color:#9ca3af">No submissions.</div>`;
+        console.log("[DEBUG] total records gathered:", records.length);
+
+        if (!records.length) {
+          setStatus("No data found.", false);
+          dataContainer.innerHTML =
+            '<div style="padding:10px;font-size:0.9rem;color:#9ca3af;">No submissions to display.</div>';
           return;
         }
 
         buildAccordion(records);
-        rowCountEl.textContent = records.length;
-        lastUpdatedEl.textContent = "Last updated: " + formatTime();
         setStatus("Data loaded.");
-      }
-      catch (err) {
-        console.error(err);
+        lastUpdatedEl.textContent = "Last updated: " + formatTimestamp();
+      } catch (err) {
+        console.error("Error in loadData:", err);
         setStatus("Error loading data: " + err.message, true);
       }
     }
 
-    function groupByCourse(records) {
+    function groupByCourseAndSection(records) {
       const map = {};
       for (const r of records) {
-        if (!map[r.course]) map[r.course] = {};
-        if (!map[r.course][r.section]) map[r.course][r.section] = [];
+        if (!map[r.course]) {
+          map[r.course] = {};
+        }
+        if (!map[r.course][r.section]) {
+          map[r.course][r.section] = [];
+        }
         map[r.course][r.section].push(r);
       }
+      console.log("[DEBUG] grouped map:", map);
       return map;
     }
 
     function buildAccordion(records) {
-      const grouped = groupByCourse(records);
+      const grouped = groupByCourseAndSection(records);
 
       dataContainer.innerHTML = "";
       allRows = [];
+      let globalRowCount = 0;
 
-      for (const course of Object.keys(grouped).sort()) {
+      const sortedCourses = Object.keys(grouped).sort();
+      console.log("[DEBUG] sortedCourses:", sortedCourses);
+
+      for (const course of sortedCourses) {
+        const courseSections = grouped[course];
         const courseBlock = document.createElement("details");
         courseBlock.className = "course-block";
 
+        const totalInCourse = Object.values(courseSections).reduce(
+          (sum, arr) => sum + arr.length,
+          0
+        );
+
         const courseSummary = document.createElement("summary");
-        const total = Object.values(grouped[course]).reduce((s,a)=>s+a.length,0);
         courseSummary.innerHTML = `
           <div class="summary-main">
             <span class="label">${course}</span>
-            <span class="meta">Sections: ${Object.keys(grouped[course]).length} • Records: ${total}</span>
+            <span class="meta">Sections: ${
+              Object.keys(courseSections).length
+            } • Records: ${totalInCourse}</span>
           </div>
-          <span class="summary-chevron">▶</span>`;
+          <span class="summary-chevron">▶</span>
+        `;
         courseBlock.appendChild(courseSummary);
 
-        const sectionWrap = document.createElement("div");
-        sectionWrap.className = "accordion";
+        const sectionAccordion = document.createElement("div");
+        sectionAccordion.className = "accordion";
 
-        for (const section of Object.keys(grouped[course]).sort()) {
+        const sortedSections = Object.keys(courseSections).sort();
+        console.log("[DEBUG] course", course, "sortedSections:", sortedSections);
+
+        for (const section of sortedSections) {
+          const rows = courseSections[section];
           const sectionBlock = document.createElement("details");
           sectionBlock.className = "section-block";
 
-          const secSummary = document.createElement("summary");
-          secSummary.innerHTML = `
+          const sectionSummary = document.createElement("summary");
+          sectionSummary.innerHTML = `
             <div class="summary-main">
               <span class="label">Section ${section}</span>
-              <span class="meta">Records: ${grouped[course][section].length}</span>
+              <span class="meta">Records: ${rows.length}</span>
             </div>
-            <span class="summary-chevron">▶</span>`;
-          sectionBlock.appendChild(secSummary);
+            <span class="summary-chevron">▶</span>
+          `;
+          sectionBlock.appendChild(sectionSummary);
 
           const inner = document.createElement("div");
           inner.className = "section-inner";
-          inner.innerHTML = `<div class="section-caption">Click column headers to sort. Use the search box above to filter.</div>`;
+          inner.innerHTML = `
+            <div class="section-caption">
+              Click column headers to sort. Use the search box above to filter.
+            </div>
+          `;
 
           const tableWrap = document.createElement("div");
           tableWrap.className = "table-wrap";
 
           const table = document.createElement("table");
           const thead = document.createElement("thead");
-
           thead.innerHTML = `
             <tr>
               <th>Name</th>
@@ -433,12 +561,13 @@
               <th>Section</th>
               <th>Score</th>
               <th>Attempt ID</th>
-            </tr>`;
+            </tr>
+          `;
           table.appendChild(thead);
 
           const tbody = document.createElement("tbody");
 
-          grouped[course][section].forEach(r => {
+          rows.forEach((r) => {
             const tr = document.createElement("tr");
             tr.dataset.name = r.name.toLowerCase();
             tr.dataset.course = r.course.toLowerCase();
@@ -448,34 +577,59 @@
               <td>${r.name}</td>
               <td>${r.course}</td>
               <td>${r.section}</td>
-              <td>${r.score}</td>
-              <td>${r.attemptId}</td>`;
+              <td>${isNaN(r.score) ? "-" : r.score}</td>
+              <td>${r.attemptId}</td>
+            `;
             tbody.appendChild(tr);
             allRows.push(tr);
+            globalRowCount++;
           });
 
           table.appendChild(tbody);
           tableWrap.appendChild(table);
           inner.appendChild(tableWrap);
           sectionBlock.appendChild(inner);
-          sectionWrap.appendChild(sectionBlock);
+          sectionAccordion.appendChild(sectionBlock);
         }
 
-        courseBlock.appendChild(sectionWrap);
+        courseBlock.appendChild(sectionAccordion);
         dataContainer.appendChild(courseBlock);
       }
+
+      rowCountEl.textContent = globalRowCount.toString();
+      console.log("[DEBUG] globalRowCount:", globalRowCount);
     }
 
-    function applySearch(query) {
-      const q = query.toLowerCase();
-      allRows.forEach(tr => {
-        const text = (tr.dataset.name + " " + tr.dataset.course + " " + tr.dataset.section);
-        tr.classList.toggle("hidden", !text.includes(q));
+    function applySearchFilter(query) {
+      const q = (query || "").trim().toLowerCase();
+      const hasQuery = q.length > 0;
+      console.log("[DEBUG] applySearchFilter query:", q);
+
+      allRows.forEach((tr) => {
+        if (!hasQuery) {
+          tr.classList.remove("hidden");
+          return;
+        }
+        const haystack =
+          tr.dataset.name +
+          " " +
+          tr.dataset.course +
+          " " +
+          tr.dataset.section;
+
+        if (haystack.includes(q)) {
+          tr.classList.remove("hidden");
+        } else {
+          tr.classList.add("hidden");
+        }
       });
     }
 
-    searchInput.addEventListener("input", e => applySearch(e.target.value));
+    searchInput.addEventListener("input", (e) => {
+      applySearchFilter(e.target.value);
+    });
 
+    console.log("[DEBUG] Calling loadData()…");
     loadData();
   </script>
 </body>
