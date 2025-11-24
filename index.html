@@ -5,635 +5,145 @@
   <title>Final Exam Results Viewer</title>
   <meta name="viewport" content="width=device-width, initial-scale=1" />
 
-  <!-- Cache busting to fight GitHub / browser cache -->
-  <meta http-equiv="Cache-Control" content="no-cache, no-store, must-revalidate" />
-  <meta http-equiv="Pragma" content="no-cache" />
-  <meta http-equiv="Expires" content="0" />
-  <meta name="version" content="build-ansci-finals-exam-A-1">
-
   <style>
-    :root {
-      --bg: #020617;
-      --bg-soft: #020819;
-      --card: #020617;
-      --border-soft: #1f2937;
-      --accent: #22d3ee;
-      --accent-soft: rgba(34, 211, 238, 0.18);
-      --text: #e5e7eb;
-      --muted: #9ca3af;
-      --danger: #f87171;
-      --radius-lg: 18px;
-      --radius-md: 12px;
-      --shadow-soft: 0 20px 45px rgba(15, 23, 42, 0.8);
-    }
-
-    * {
-      box-sizing: border-box;
-    }
-
     body {
       margin: 0;
-      font-family: system-ui, -apple-system, BlinkMacSystemFont, "Segoe UI",
-        Roboto, Ubuntu, "Helvetica Neue", Arial, sans-serif;
-      background: radial-gradient(circle at top left, #0b1120 0, #020617 50%);
-      color: var(--text);
-      min-height: 100vh;
+      font-family: system-ui, sans-serif;
+      background: #020617;
+      color: #e5e7eb;
+      padding: 20px;
     }
-
-    .page {
-      max-width: 1100px;
-      margin: 0 auto;
-      padding: 20px 16px 40px;
-    }
-
-    header {
-      margin-bottom: 20px;
-    }
-
     h1 {
-      margin: 0 0 4px;
-      font-size: 1.6rem;
-      letter-spacing: 0.03em;
+      margin-bottom: 6px;
     }
+    .subtitle { color: #9ca3af; margin-bottom: 20px; }
 
-    .subtitle {
-      color: var(--muted);
-      font-size: 0.9rem;
+    .status { margin-bottom: 15px; font-size: 0.9rem; }
+    .status.error { color: #f87171; }
+
+    .accordion details {
+      background: #0f172a;
+      border: 1px solid #1e293b;
+      border-radius: 6px;
+      margin-bottom: 10px;
+      padding: 10px;
     }
-
-    .toolbar {
-      display: flex;
-      flex-wrap: wrap;
-      gap: 12px;
-      align-items: center;
-      margin: 18px 0 14px;
-    }
-
-    .search-wrap {
-      position: relative;
-      flex: 1 1 220px;
-      max-width: 420px;
-    }
-
-    .search-wrap input {
-      width: 100%;
-      padding: 9px 32px 9px 32px;
-      border-radius: 999px;
-      border: 1px solid var(--border-soft);
-      background: radial-gradient(
-          circle at top left,
-          rgba(148, 163, 184, 0.25) 0,
-          rgba(30, 64, 175, 0.02) 40%,
-          rgba(15, 23, 42, 0.9) 100%
-        );
-      color: var(--text);
-      outline: none;
-      font-size: 0.9rem;
-    }
-
-    .search-wrap input::placeholder {
-      color: #64748b;
-    }
-
-    .search-wrap span {
-      position: absolute;
-      left: 10px;
-      top: 50%;
-      transform: translateY(-50%);
-      font-size: 0.9rem;
-      color: #64748b;
-    }
-
-    .search-wrap .kbd {
-      position: absolute;
-      right: 12px;
-      top: 50%;
-      transform: translateY(-50%);
-      font-size: 0.7rem;
-      padding: 2px 6px;
-      border-radius: 999px;
-      border: 1px solid rgba(148, 163, 184, 0.4);
-      color: #9ca3af;
-    }
-
-    .pill-info {
-      font-size: 0.8rem;
-      padding: 3px 10px;
-      border-radius: 999px;
-      border: 1px solid rgba(148, 163, 184, 0.45);
-      background: rgba(15, 23, 42, 0.8);
-      color: #cbd5f5;
-    }
-
-    .pill-info strong {
-      color: var(--accent);
-    }
-
-    .card {
-      border-radius: var(--radius-lg);
-      padding: 16px 14px 10px;
-      background:
-        radial-gradient(circle at top left, rgba(56, 189, 248, 0.16), transparent 55%),
-        radial-gradient(circle at bottom right, rgba(37, 99, 235, 0.28), #020617 70%);
-      box-shadow: var(--shadow-soft);
-      border: 1px solid rgba(15, 23, 42, 0.85);
-    }
-
-    .status-bar {
-      display: flex;
-      justify-content: space-between;
-      gap: 8px;
-      align-items: center;
-      margin-bottom: 8px;
-      font-size: 0.8rem;
-      color: var(--muted);
-    }
-
-    #statusText span.dot {
-      display: inline-block;
-      width: 7px;
-      height: 7px;
-      border-radius: 999px;
-      margin-right: 6px;
-      background: var(--accent);
-      box-shadow: 0 0 7px rgba(45, 212, 191, 0.9);
-    }
-
-    #statusText.error span.dot {
-      background: var(--danger);
-      box-shadow: 0 0 7px rgba(248, 113, 113, 0.9);
-    }
-
-    .accordion {
-      margin-top: 6px;
-      display: flex;
-      flex-direction: column;
-      gap: 10px;
-    }
-
-    details.course-block,
-    details.section-block {
-      border-radius: var(--radius-md);
-      border: 1px solid rgba(148, 163, 184, 0.35);
-      background: rgba(15, 23, 42, 0.8);
-      padding: 0;
-      overflow: hidden;
-    }
-
-    details.course-block[open],
-    details.section-block[open] {
-      border-color: rgba(56, 189, 248, 0.7);
-      box-shadow: 0 0 0 1px rgba(56, 189, 248, 0.25);
-    }
-
-    details > summary {
-      list-style: none;
-      padding: 9px 12px;
+    summary {
       cursor: pointer;
-      display: flex;
-      align-items: center;
-      justify-content: space-between;
-      gap: 8px;
-      user-select: none;
-    }
-
-    details > summary::-webkit-details-marker {
-      display: none;
-    }
-
-    .summary-main {
-      display: flex;
-      align-items: baseline;
-      gap: 6px;
-      font-size: 0.92rem;
-    }
-
-    .summary-main .label {
+      font-size: 1rem;
       font-weight: 600;
-      letter-spacing: 0.02em;
-    }
-
-    .summary-main .meta {
-      font-size: 0.8rem;
-      color: var(--muted);
-    }
-
-    .summary-chevron {
-      font-size: 0.85rem;
-      color: #64748b;
-      margin-left: 4px;
-      transition: transform 0.18s ease;
-    }
-
-    details[open] .summary-chevron {
-      transform: rotate(90deg);
-      color: #e2e8f0;
-    }
-
-    .section-inner {
-      padding: 4px 10px 10px;
-      border-top: 1px solid rgba(15, 23, 42, 0.9);
-      background: radial-gradient(circle at top left, rgba(148, 163, 184, 0.16), transparent 60%);
-    }
-
-    .section-inner .section-caption {
-      font-size: 0.8rem;
-      color: var(--muted);
-      margin: 2px 0 6px;
-    }
-
-    .table-wrap {
-      overflow-x: auto;
-      border-radius: 10px;
-      border: 1px solid rgba(31, 41, 55, 0.9);
-      background: rgba(15, 23, 42, 0.88);
     }
 
     table {
       width: 100%;
       border-collapse: collapse;
-      font-size: 0.86rem;
-      min-width: 520px;
+      margin-top: 10px;
+      font-size: 0.9rem;
     }
-
-    thead {
-      background: linear-gradient(to right, rgba(15, 23, 42, 0.9), #020617);
-    }
-
-    th,
-    td {
-      padding: 8px 10px;
+    th, td {
+      padding: 8px;
+      border-bottom: 1px solid #1e293b;
       text-align: left;
-      border-bottom: 1px solid rgba(30, 41, 59, 0.7);
       white-space: nowrap;
     }
-
     th {
-      font-weight: 500;
+      background: #1e293b;
       color: #e5e7eb;
-      position: sticky;
-      top: 0;
-      background: linear-gradient(to right, rgba(15, 23, 42, 0.96), #020617);
-      z-index: 2;
     }
-
-    tbody tr:nth-child(even) {
-      background: rgba(15, 23, 42, 0.75);
-    }
-
-    tbody tr:nth-child(odd) {
-      background: rgba(15, 23, 42, 0.45);
-    }
-
-    tbody tr:hover {
-      background: rgba(30, 64, 175, 0.35);
-    }
-
-    .hidden {
-      display: none !important;
-    }
-
-    @media (max-width: 640px) {
-      h1 {
-        font-size: 1.3rem;
-      }
-      .card {
-        padding: 14px 10px 10px;
-      }
-    }
+    tr:nth-child(even) { background: #0f1a30; }
+    tr:nth-child(odd) { background: #0b1424; }
   </style>
 </head>
 <body>
-  <div class="page">
-    <header>
-      <h1>Final Exam Submissions</h1>
-      <div class="subtitle">
-        Viewer for <code>finals-exam / [CourseDoc] / submissions / [StudentDoc] / attempts</code>
-      </div>
-    </header>
 
-    <div class="toolbar">
-      <div class="search-wrap">
-        <span>🔍</span>
-        <input
-          id="searchInput"
-          type="text"
-          placeholder="Search by name, course, section…"
-          autocomplete="off"
-        />
-        <div class="kbd">Ctrl+F</div>
-      </div>
+<h1>Final Exam Submissions</h1>
+<div class="subtitle">
+  Loaded from: <code>finals-exam / ANSCI2025Final / submissions</code>
+</div>
 
-      <div class="pill-info">
-        Loaded rows: <strong id="rowCount">0</strong>
-      </div>
-    </div>
+<div id="status" class="status">Initializing…</div>
+<div id="container"></div>
 
-    <div class="card">
-      <div class="status-bar">
-        <div id="statusText"><span class="dot"></span><span>Connecting to Firestore…</span></div>
-        <div id="lastUpdated">Last updated: —</div>
-      </div>
+<!-- FIREBASE MODULES -->
+<script type="module">
+  import { initializeApp } from "https://www.gstatic.com/firebasejs/11.0.1/firebase-app.js";
+  import {
+    getFirestore,
+    collection,
+    getDocs
+  } from "https://www.gstatic.com/firebasejs/11.0.1/firebase-firestore.js";
 
-      <div id="dataContainer" class="accordion"></div>
-    </div>
-  </div>
+  const statusEl = document.getElementById("status");
+  const container = document.getElementById("container");
 
-  <!-- Firebase + Firestore -->
-  <script type="module">
-    import { initializeApp } from "https://www.gstatic.com/firebasejs/11.0.1/firebase-app.js";
-    import {
-      getFirestore,
-      collection,
-      getDocs
-    } from "https://www.gstatic.com/firebasejs/11.0.1/firebase-firestore.js";
+  function setStatus(msg, isError = false) {
+    statusEl.textContent = msg;
+    statusEl.classList.toggle("error", isError);
+    console.log("[STATUS]", msg);
+  }
 
-    console.log("[DEBUG] Script loaded, starting Firebase init…");
+  // FIREBASE CONFIG
+  const firebaseConfig = {
+    apiKey: "AIzaSyB-idZOq8h9sVttNdzXE2t8FMoYI_snq7g",
+    authDomain: "kuya-quiz-100.firebaseapp.com",
+    projectId: "kuya-quiz-100",
+    storageBucket: "kuya-quiz-100.firebasestorage.app",
+    messagingSenderId: "74623975270",
+    appId: "1:74623975270:web:dec2b21dbee017292952a7"
+  };
 
-    const firebaseConfig = {
-      apiKey: "AIzaSyB-idZOq8h9sVttNdzXE2t8FMoYI_snq7g",
-      authDomain: "kuya-quiz-100.firebaseapp.com",
-      projectId: "kuya-quiz-100",
-      storageBucket: "kuya-quiz-100.firebasestorage.app",
-      messagingSenderId: "74623975270",
-      appId: "1:74623975270:web:dec2b21dbee017292952a7"
-    };
+  console.log("[DEBUG] Initializing Firebase…");
+  const app = initializeApp(firebaseConfig);
+  const db = getFirestore(app);
 
-    console.log("[DEBUG] firebaseConfig:", firebaseConfig);
+  async function loadData() {
+    try {
+      setStatus("Loading data…");
 
-    const app = initializeApp(firebaseConfig);
-    const db = getFirestore(app);
-
-    console.log("[DEBUG] Firebase app initialized:", app.name);
-
-    const finalsExamCollectionName = "finals-exam";
-    const submissionsSubcollection = "submissions";
-    const attemptsSubcollection = "attempts";
-
-    const dataContainer = document.getElementById("dataContainer");
-    const statusText = document.getElementById("statusText");
-    const rowCountEl = document.getElementById("rowCount");
-    const lastUpdatedEl = document.getElementById("lastUpdated");
-    const searchInput = document.getElementById("searchInput");
-
-    let allRows = [];
-
-    function setStatus(message, isError = false) {
-      statusText.classList.toggle("error", isError);
-      const dot = '<span class="dot"></span>';
-      statusText.innerHTML = dot + "<span>" + message + "</span>";
-      console.log("[STATUS]", message);
-    }
-
-    function formatTimestamp(date) {
-      const d = date ?? new Date();
-      return (
-        d.getFullYear() +
-        "-" +
-        String(d.getMonth() + 1).padStart(2, "0") +
-        "-" +
-        String(d.getDate()).padStart(2, "0") +
-        " " +
-        String(d.getHours()).padStart(2, "0") +
-        ":" +
-        String(d.getMinutes()).padStart(2, "0")
+      // Correct path for only ANSCI2025Final
+      const submissionsRef = collection(db,
+        "finals-exam",
+        "ANSCI2025Final",
+        "submissions"
       );
-    }
 
-    async function loadData() {
-      try {
-        console.log("[DEBUG] loadData() started");
-        setStatus("Loading data from Firestore…");
-        const records = [];
+      const snap = await getDocs(submissionsRef);
+      console.log("[DEBUG] submissions count:", snap.size);
 
-        const finalsColRef = collection(db, finalsExamCollectionName);
-        console.log("[DEBUG] finalsColRef path:", finalsColRef.path);
-
-        const finalsSnap = await getDocs(finalsColRef);
-        console.log("[DEBUG] finals-exam doc count:", finalsSnap.size);
-        finalsSnap.forEach(doc => console.log("  [COURSE DOC]", doc.id));
-
-        for (const courseDoc of finalsSnap.docs) {
-          const courseDocId = courseDoc.id;
-          console.log(`\n[DEBUG] Processing courseDoc: ${courseDocId}`);
-
-          const submissionsRef = collection(
-            db,
-            finalsExamCollectionName,
-            courseDocId,
-            submissionsSubcollection
-          );
-          console.log("  [DEBUG] submissionsRef path:", submissionsRef.path);
-
-          const submissionsSnap = await getDocs(submissionsRef);
-          console.log(
-            `  [DEBUG] course ${courseDocId} submissions count:`,
-            submissionsSnap.size
-          );
-
-          for (const submissionDoc of submissionsSnap.docs) {
-            const submissionId = submissionDoc.id;
-            const subData = submissionDoc.data() || {};
-            console.log(
-              `    [DEBUG] submissionDoc ${submissionId} data keys:`,
-              Object.keys(subData)
-            );
-
-            // CASE 1: Student data is directly on the submission document
-            if (
-              subData.Name ||
-              subData.name ||
-              subData.Score ||
-              subData.Course ||
-              subData.course
-            ) {
-              const name =
-                subData.Name ??
-                subData.name ??
-                "Unknown";
-              const course =
-                subData.Course ??
-                subData.course ??
-                courseDocId;
-              const section =
-                subData.Section ??
-                subData.section ??
-                "No Section";
-
-              const score =
-                typeof subData.Score === "number"
-                  ? subData.Score
-                  : parseFloat(subData.Score ?? "0") || 0;
-
-              records.push({
-                course,
-                section,
-                name,
-                score,
-                attemptId: submissionId
-              });
-
-              console.log(
-                `      [DEBUG] Added DIRECT record from submission ${submissionId}:`,
-                { name, course, section, score }
-              );
-            }
-
-            // CASE 2: Student data is inside attempts subcollection
-            const attemptsRef = collection(
-              db,
-              finalsExamCollectionName,
-              courseDocId,
-              submissionsSubcollection,
-              submissionId,
-              attemptsSubcollection
-            );
-            console.log("      [DEBUG] attemptsRef path:", attemptsRef.path);
-
-            const attemptsSnap = await getDocs(attemptsRef);
-            console.log(
-              `      [DEBUG] submission ${submissionId} attempts count:`,
-              attemptsSnap.size
-            );
-
-            for (const attemptDoc of attemptsSnap.docs) {
-              const attemptId = attemptDoc.id;
-              const data = attemptDoc.data() || {};
-
-              const name =
-                data.Name ??
-                data.name ??
-                "Unknown";
-              const course =
-                data.Course ??
-                data.course ??
-                courseDocId;
-              const section =
-                data.Section ??
-                data.section ??
-                "No Section";
-
-              const score =
-                typeof data.Score === "number"
-                  ? data.Score
-                  : parseFloat(data.Score ?? "0") || 0;
-
-              records.push({
-                course,
-                section,
-                name,
-                score,
-                attemptId: attemptId
-              });
-
-              console.log(
-                `        [DEBUG] Added ATTEMPT record from ${submissionId}/${attemptId}:`,
-                { name, course, section, score }
-              );
-            }
-          }
-        }
-
-        console.log("[DEBUG] total records gathered:", records.length);
-
-        if (!records.length) {
-          setStatus("No data found.", false);
-          dataContainer.innerHTML =
-            '<div style="padding:10px;font-size:0.9rem;color:#9ca3af;">No submissions to display.</div>';
-          return;
-        }
-
-        buildAccordion(records);
-        setStatus("Data loaded.");
-        lastUpdatedEl.textContent = "Last updated: " + formatTimestamp();
-      } catch (err) {
-        console.error("Error in loadData:", err);
-        setStatus("Error loading data: " + err.message, true);
+      if (snap.empty) {
+        setStatus("No submissions found.");
+        return;
       }
+
+      const records = [];
+      snap.forEach(doc => {
+        const data = doc.data();
+        console.log("[DEBUG] record:", doc.id, data);
+
+        records.push({
+          id: doc.id,
+          name: data.Name ?? "Unknown",
+          course: data.Course ?? "Unknown",
+          score: data.Score ?? "—",
+          section: data.Section ?? "—"
+        });
+      });
+
+      render(records);
+      setStatus("Loaded " + records.length + " submissions.");
     }
-
-    function groupByCourseAndSection(records) {
-      const map = {};
-      for (const r of records) {
-        if (!map[r.course]) {
-          map[r.course] = {};
-        }
-        if (!map[r.course][r.section]) {
-          map[r.course][r.section] = [];
-        }
-        map[r.course][r.section].push(r);
-      }
-      console.log("[DEBUG] grouped map:", map);
-      return map;
+    catch (err) {
+      console.error(err);
+      setStatus("Error: " + err.message, true);
     }
+  }
 
-    function buildAccordion(records) {
-      const grouped = groupByCourseAndSection(records);
-
-      dataContainer.innerHTML = "";
-      allRows = [];
-      let globalRowCount = 0;
-
-      const sortedCourses = Object.keys(grouped).sort();
-      console.log("[DEBUG] sortedCourses:", sortedCourses);
-
-      for (const course of sortedCourses) {
-        const courseSections = grouped[course];
-        const courseBlock = document.createElement("details");
-        courseBlock.className = "course-block";
-
-        const totalInCourse = Object.values(courseSections).reduce(
-          (sum, arr) => sum + arr.length,
-          0
-        );
-
-        const courseSummary = document.createElement("summary");
-        courseSummary.innerHTML = `
-          <div class="summary-main">
-            <span class="label">${course}</span>
-            <span class="meta">Sections: ${
-              Object.keys(courseSections).length
-            } • Records: ${totalInCourse}</span>
-          </div>
-          <span class="summary-chevron">▶</span>
-        `;
-        courseBlock.appendChild(courseSummary);
-
-        const sectionAccordion = document.createElement("div");
-        sectionAccordion.className = "accordion";
-
-        const sortedSections = Object.keys(courseSections).sort();
-        console.log("[DEBUG] course", course, "sortedSections:", sortedSections);
-
-        for (const section of sortedSections) {
-          const rows = courseSections[section];
-          const sectionBlock = document.createElement("details");
-          sectionBlock.className = "section-block";
-
-          const sectionSummary = document.createElement("summary");
-          sectionSummary.innerHTML = `
-            <div class="summary-main">
-              <span class="label">Section ${section}</span>
-              <span class="meta">Records: ${rows.length}</span>
-            </div>
-            <span class="summary-chevron">▶</span>
-          `;
-          sectionBlock.appendChild(sectionSummary);
-
-          const inner = document.createElement("div");
-          inner.className = "section-inner";
-          inner.innerHTML = `
-            <div class="section-caption">
-              Use the search box above to filter by name, course, or section.
-            </div>
-          `;
-
-          const tableWrap = document.createElement("div");
-          tableWrap.className = "table-wrap";
-
-          const table = document.createElement("table");
-          const thead = document.createElement("thead");
-          thead.innerHTML = `
+  function render(records) {
+    const html = `
+      <details open>
+        <summary>ANSCI2025Final – ${records.length} submissions</summary>
+        <table>
+          <thead>
             <tr>
               <th>Name</th>
               <th>Course</th>
@@ -641,75 +151,27 @@
               <th>Score</th>
               <th>Attempt ID</th>
             </tr>
-          `;
-          table.appendChild(thead);
+          </thead>
+          <tbody>
+            ${records.map(r => `
+              <tr>
+                <td>${r.name}</td>
+                <td>${r.course}</td>
+                <td>${r.section}</td>
+                <td>${r.score}</td>
+                <td>${r.id}</td>
+              </tr>
+            `).join("")}
+          </tbody>
+        </table>
+      </details>
+    `;
 
-          const tbody = document.createElement("tbody");
+    container.innerHTML = html;
+  }
 
-          rows.forEach((r) => {
-            const tr = document.createElement("tr");
-            tr.dataset.name = r.name.toLowerCase();
-            tr.dataset.course = r.course.toLowerCase();
-            tr.dataset.section = r.section.toLowerCase();
+  loadData();
+</script>
 
-            tr.innerHTML = `
-              <td>${r.name}</td>
-              <td>${r.course}</td>
-              <td>${r.section}</td>
-              <td>${isNaN(r.score) ? "-" : r.score}</td>
-              <td>${r.attemptId}</td>
-            `;
-            tbody.appendChild(tr);
-            allRows.push(tr);
-            globalRowCount++;
-          });
-
-          table.appendChild(tbody);
-          tableWrap.appendChild(table);
-          inner.appendChild(tableWrap);
-          sectionBlock.appendChild(inner);
-          sectionAccordion.appendChild(sectionBlock);
-        }
-
-        courseBlock.appendChild(sectionAccordion);
-        dataContainer.appendChild(courseBlock);
-      }
-
-      rowCountEl.textContent = globalRowCount.toString();
-      console.log("[DEBUG] globalRowCount:", globalRowCount);
-    }
-
-    function applySearchFilter(query) {
-      const q = (query || "").trim().toLowerCase();
-      const hasQuery = q.length > 0;
-      console.log("[DEBUG] applySearchFilter query:", q);
-
-      allRows.forEach((tr) => {
-        if (!hasQuery) {
-          tr.classList.remove("hidden");
-          return;
-        }
-        const haystack =
-          tr.dataset.name +
-          " " +
-          tr.dataset.course +
-          " " +
-          tr.dataset.section;
-
-        if (haystack.includes(q)) {
-          tr.classList.remove("hidden");
-        } else {
-          tr.classList.add("hidden");
-        }
-      });
-    }
-
-    searchInput.addEventListener("input", (e) => {
-      applySearchFilter(e.target.value);
-    });
-
-    console.log("[DEBUG] Calling loadData()…");
-    loadData();
-  </script>
 </body>
 </html>
