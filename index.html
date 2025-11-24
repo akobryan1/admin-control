@@ -5,173 +5,822 @@
   <title>Final Exam Results Viewer</title>
   <meta name="viewport" content="width=device-width, initial-scale=1" />
 
+  <!-- Cache busting -->
+  <meta http-equiv="Cache-Control" content="no-cache, no-store, must-revalidate" />
+  <meta http-equiv="Pragma" content="no-cache" />
+  <meta http-equiv="Expires" content="0" />
+  <meta name="version" content="build-ansci2025final-pdf-1">
+
   <style>
+    :root {
+      --bg: #020617;
+      --bg-soft: #020819;
+      --card: #020617;
+      --border-soft: #1f2937;
+      --accent: #22d3ee;
+      --accent-soft: rgba(34, 211, 238, 0.18);
+      --text: #e5e7eb;
+      --muted: #9ca3af;
+      --danger: #f87171;
+      --radius-lg: 18px;
+      --radius-md: 12px;
+      --shadow-soft: 0 20px 45px rgba(15, 23, 42, 0.8);
+    }
+
+    * {
+      box-sizing: border-box;
+    }
+
     body {
       margin: 0;
-      font-family: system-ui, sans-serif;
-      background: #020617;
-      color: #e5e7eb;
-      padding: 20px;
+      font-family: system-ui, -apple-system, BlinkMacSystemFont, "Segoe UI",
+        Roboto, Ubuntu, "Helvetica Neue", Arial, sans-serif;
+      background: radial-gradient(circle at top left, #0b1120 0, #020617 50%);
+      color: var(--text);
+      min-height: 100vh;
     }
+
+    .page {
+      max-width: 1100px;
+      margin: 0 auto;
+      padding: 20px 16px 40px;
+    }
+
+    header {
+      margin-bottom: 20px;
+    }
+
     h1 {
-      margin-bottom: 6px;
+      margin: 0 0 4px;
+      font-size: 1.6rem;
+      letter-spacing: 0.03em;
     }
-    .subtitle { color: #9ca3af; margin-bottom: 20px; }
 
-    .status { margin-bottom: 15px; font-size: 0.9rem; }
-    .status.error { color: #f87171; }
-
-    .accordion details {
-      background: #0f172a;
-      border: 1px solid #1e293b;
-      border-radius: 6px;
-      margin-bottom: 10px;
-      padding: 10px;
+    .subtitle {
+      color: var(--muted);
+      font-size: 0.9rem;
     }
-    summary {
+
+    .toolbar {
+      display: flex;
+      flex-wrap: wrap;
+      gap: 12px;
+      align-items: center;
+      margin: 18px 0 14px;
+    }
+
+    .search-wrap {
+      position: relative;
+      flex: 1 1 220px;
+      max-width: 420px;
+    }
+
+    .search-wrap input {
+      width: 100%;
+      padding: 9px 32px 9px 32px;
+      border-radius: 999px;
+      border: 1px solid var(--border-soft);
+      background: radial-gradient(
+          circle at top left,
+          rgba(148, 163, 184, 0.25) 0,
+          rgba(30, 64, 175, 0.02) 40%,
+          rgba(15, 23, 42, 0.9) 100%
+        );
+      color: var(--text);
+      outline: none;
+      font-size: 0.9rem;
+    }
+
+    .search-wrap input::placeholder {
+      color: #64748b;
+    }
+
+    .search-wrap span {
+      position: absolute;
+      left: 10px;
+      top: 50%;
+      transform: translateY(-50%);
+      font-size: 0.9rem;
+      color: #64748b;
+    }
+
+    .search-wrap .kbd {
+      position: absolute;
+      right: 12px;
+      top: 50%;
+      transform: translateY(-50%);
+      font-size: 0.7rem;
+      padding: 2px 6px;
+      border-radius: 999px;
+      border: 1px solid rgba(148, 163, 184, 0.4);
+      color: #9ca3af;
+    }
+
+    .pill-info {
+      font-size: 0.8rem;
+      padding: 3px 10px;
+      border-radius: 999px;
+      border: 1px solid rgba(148, 163, 184, 0.45);
+      background: rgba(15, 23, 42, 0.8);
+      color: #cbd5f5;
+    }
+
+    .pill-info strong {
+      color: var(--accent);
+    }
+
+    .card {
+      border-radius: var(--radius-lg);
+      padding: 16px 14px 10px;
+      background:
+        radial-gradient(circle at top left, rgba(56, 189, 248, 0.16), transparent 55%),
+        radial-gradient(circle at bottom right, rgba(37, 99, 235, 0.28), #020617 70%);
+      box-shadow: var(--shadow-soft);
+      border: 1px solid rgba(15, 23, 42, 0.85);
+    }
+
+    .status-bar {
+      display: flex;
+      justify-content: space-between;
+      gap: 8px;
+      align-items: center;
+      margin-bottom: 8px;
+      font-size: 0.8rem;
+      color: var(--muted);
+    }
+
+    #statusText span.dot {
+      display: inline-block;
+      width: 7px;
+      height: 7px;
+      border-radius: 999px;
+      margin-right: 6px;
+      background: var(--accent);
+      box-shadow: 0 0 7px rgba(45, 212, 191, 0.9);
+    }
+
+    #statusText.error span.dot {
+      background: var(--danger);
+      box-shadow: 0 0 7px rgba(248, 113, 113, 0.9);
+    }
+
+    .accordion {
+      margin-top: 6px;
+      display: flex;
+      flex-direction: column;
+      gap: 10px;
+    }
+
+    details.course-block,
+    details.section-block {
+      border-radius: var(--radius-md);
+      border: 1px solid rgba(148, 163, 184, 0.35);
+      background: rgba(15, 23, 42, 0.8);
+      padding: 0;
+      overflow: hidden;
+    }
+
+    details.course-block[open],
+    details.section-block[open] {
+      border-color: rgba(56, 189, 248, 0.7);
+      box-shadow: 0 0 0 1px rgba(56, 189, 248, 0.25);
+    }
+
+    details > summary {
+      list-style: none;
+      padding: 9px 12px;
       cursor: pointer;
-      font-size: 1rem;
+      display: flex;
+      align-items: center;
+      justify-content: space-between;
+      gap: 8px;
+      user-select: none;
+    }
+
+    details > summary::-webkit-details-marker {
+      display: none;
+    }
+
+    .summary-main {
+      display: flex;
+      align-items: baseline;
+      gap: 6px;
+      font-size: 0.92rem;
+    }
+
+    .summary-main .label {
       font-weight: 600;
+      letter-spacing: 0.02em;
+    }
+
+    .summary-main .meta {
+      font-size: 0.8rem;
+      color: var(--muted);
+    }
+
+    .summary-chevron {
+      font-size: 0.85rem;
+      color: #64748b;
+      margin-left: 4px;
+      transition: transform 0.18s ease;
+    }
+
+    details[open] .summary-chevron {
+      transform: rotate(90deg);
+      color: #e2e8f0;
+    }
+
+    .section-inner {
+      padding: 4px 10px 10px;
+      border-top: 1px solid rgba(15, 23, 42, 0.9);
+      background: radial-gradient(circle at top left, rgba(148, 163, 184, 0.16), transparent 60%);
+    }
+
+    .section-inner .section-caption {
+      font-size: 0.8rem;
+      color: var(--muted);
+      margin: 2px 0 6px;
+    }
+
+    .table-wrap {
+      overflow-x: auto;
+      border-radius: 10px;
+      border: 1px solid rgba(31, 41, 55, 0.9);
+      background: rgba(15, 23, 42, 0.88);
     }
 
     table {
       width: 100%;
       border-collapse: collapse;
-      margin-top: 10px;
-      font-size: 0.9rem;
+      font-size: 0.86rem;
+      min-width: 520px;
     }
-    th, td {
-      padding: 8px;
-      border-bottom: 1px solid #1e293b;
+
+    thead {
+      background: linear-gradient(to right, rgba(15, 23, 42, 0.9), #020617);
+    }
+
+    th,
+    td {
+      padding: 8px 10px;
       text-align: left;
+      border-bottom: 1px solid rgba(30, 41, 59, 0.7);
       white-space: nowrap;
     }
+
     th {
-      background: #1e293b;
+      font-weight: 500;
       color: #e5e7eb;
+      position: sticky;
+      top: 0;
+      background: linear-gradient(to right, rgba(15, 23, 42, 0.96), #020617);
+      z-index: 2;
     }
-    tr:nth-child(even) { background: #0f1a30; }
-    tr:nth-child(odd) { background: #0b1424; }
+
+    tbody tr:nth-child(even) {
+      background: rgba(15, 23, 42, 0.75);
+    }
+
+    tbody tr:nth-child(odd) {
+      background: rgba(15, 23, 42, 0.45);
+    }
+
+    tbody tr:hover {
+      background: rgba(30, 64, 175, 0.35);
+    }
+
+    .hidden {
+      display: none !important;
+    }
+
+    .download-btn {
+      padding: 4px 10px;
+      border-radius: 999px;
+      border: 1px solid var(--accent);
+      background: rgba(34, 211, 238, 0.08);
+      color: var(--accent);
+      font-size: 0.78rem;
+      cursor: pointer;
+      white-space: nowrap;
+    }
+
+    .download-btn:hover {
+      background: rgba(34, 211, 238, 0.2);
+    }
+
+    @media (max-width: 640px) {
+      h1 {
+        font-size: 1.3rem;
+      }
+      .card {
+        padding: 14px 10px 10px;
+      }
+    }
   </style>
 </head>
 <body>
+  <div class="page">
+    <header>
+      <h1>Final Exam Submissions</h1>
+      <div class="subtitle">
+        Viewer for <code>finals-exam / ANSCI2025Final / submissions / [Student]</code>
+      </div>
+    </header>
 
-<h1>Final Exam Submissions</h1>
-<div class="subtitle">
-  Loaded from: <code>finals-exam / ANSCI2025Final / submissions</code>
-</div>
+    <div class="toolbar">
+      <div class="search-wrap">
+        <span>🔍</span>
+        <input
+          id="searchInput"
+          type="text"
+          placeholder="Search by name, course, section…"
+          autocomplete="off"
+        />
+        <div class="kbd">Ctrl+F</div>
+      </div>
 
-<div id="status" class="status">Initializing…</div>
-<div id="container"></div>
+      <div class="pill-info">
+        Loaded rows: <strong id="rowCount">0</strong>
+      </div>
+    </div>
 
-<!-- FIREBASE MODULES -->
-<script type="module">
-  import { initializeApp } from "https://www.gstatic.com/firebasejs/11.0.1/firebase-app.js";
-  import {
-    getFirestore,
-    collection,
-    getDocs
-  } from "https://www.gstatic.com/firebasejs/11.0.1/firebase-firestore.js";
+    <div class="card">
+      <div class="status-bar">
+        <div id="statusText"><span class="dot"></span><span>Connecting to Firestore…</span></div>
+        <div id="lastUpdated">Last updated: —</div>
+      </div>
 
-  const statusEl = document.getElementById("status");
-  const container = document.getElementById("container");
+      <div id="dataContainer" class="accordion"></div>
+    </div>
+  </div>
 
-  function setStatus(msg, isError = false) {
-    statusEl.textContent = msg;
-    statusEl.classList.toggle("error", isError);
-    console.log("[STATUS]", msg);
-  }
+  <!-- html2pdf for PDF downloads -->
+  <script src="https://cdnjs.cloudflare.com/ajax/libs/html2pdf.js/0.10.1/html2pdf.bundle.min.js"
+          crossorigin="anonymous" referrerpolicy="no-referrer"></script>
 
-  // FIREBASE CONFIG
-  const firebaseConfig = {
-    apiKey: "AIzaSyB-idZOq8h9sVttNdzXE2t8FMoYI_snq7g",
-    authDomain: "kuya-quiz-100.firebaseapp.com",
-    projectId: "kuya-quiz-100",
-    storageBucket: "kuya-quiz-100.firebasestorage.app",
-    messagingSenderId: "74623975270",
-    appId: "1:74623975270:web:dec2b21dbee017292952a7"
-  };
+  <!-- Firebase + Firestore -->
+  <script type="module">
+    import { initializeApp } from "https://www.gstatic.com/firebasejs/11.0.1/firebase-app.js";
+    import {
+      getFirestore,
+      collection,
+      getDocs
+    } from "https://www.gstatic.com/firebasejs/11.0.1/firebase-firestore.js";
 
-  console.log("[DEBUG] Initializing Firebase…");
-  const app = initializeApp(firebaseConfig);
-  const db = getFirestore(app);
+    console.log("[DEBUG] Script loaded, starting Firebase init…");
 
-  async function loadData() {
-    try {
-      setStatus("Loading data…");
+    const firebaseConfig = {
+      apiKey: "AIzaSyB-idZOq8h9sVttNdzXE2t8FMoYI_snq7g",
+      authDomain: "kuya-quiz-100.firebaseapp.com",
+      projectId: "kuya-quiz-100",
+      storageBucket: "kuya-quiz-100.firebasestorage.app",
+      messagingSenderId: "74623975270",
+      appId: "1:74623975270:web:dec2b21dbee017292952a7"
+    };
 
-      // Correct path for only ANSCI2025Final
-      const submissionsRef = collection(db,
-        "finals-exam",
-        "ANSCI2025Final",
-        "submissions"
+    console.log("[DEBUG] firebaseConfig:", firebaseConfig);
+
+    const app = initializeApp(firebaseConfig);
+    const db = getFirestore(app);
+
+    console.log("[DEBUG] Firebase app initialized:", app.name);
+
+    const ANSCI_DOC_ID = "ANSCI2025Final";
+
+    const dataContainer = document.getElementById("dataContainer");
+    const statusText = document.getElementById("statusText");
+    const rowCountEl = document.getElementById("rowCount");
+    const lastUpdatedEl = document.getElementById("lastUpdated");
+    const searchInput = document.getElementById("searchInput");
+
+    let allRows = [];
+
+    function setStatus(message, isError = false) {
+      statusText.classList.toggle("error", isError);
+      const dot = '<span class="dot"></span>';
+      statusText.innerHTML = dot + "<span>" + message + "</span>";
+      console.log("[STATUS]", message);
+    }
+
+    function formatTimestamp(date) {
+      const d = date ?? new Date();
+      return (
+        d.getFullYear() +
+        "-" +
+        String(d.getMonth() + 1).padStart(2, "0") +
+        "-" +
+        String(d.getDate()).padStart(2, "0") +
+        " " +
+        String(d.getHours()).padStart(2, "0") +
+        ":" +
+        String(d.getMinutes()).padStart(2, "0")
       );
+    }
 
-      const snap = await getDocs(submissionsRef);
-      console.log("[DEBUG] submissions count:", snap.size);
+    function sanitizeFilenamePart(str) {
+      return (str || "value")
+        .toString()
+        .normalize("NFKD")
+        .replace(/[^\w\s-]/g, "")
+        .trim()
+        .replace(/\s+/g, "-")
+        .toLowerCase();
+    }
 
-      if (snap.empty) {
-        setStatus("No submissions found.");
-        return;
+    async function loadData() {
+      try {
+        console.log("[DEBUG] loadData() started");
+        setStatus("Loading data from Firestore…");
+        const records = [];
+
+        const submissionsRef = collection(
+          db,
+          "finals-exam",
+          ANSCI_DOC_ID,
+          "submissions"
+        );
+        console.log("[DEBUG] submissionsRef path:", submissionsRef.path);
+
+        const submissionsSnap = await getDocs(submissionsRef);
+        console.log("[DEBUG] ANSCI2025Final submissions count:", submissionsSnap.size);
+
+        for (const submissionDoc of submissionsSnap.docs) {
+          const data = submissionDoc.data();
+          console.log("[DEBUG] submission", submissionDoc.id, "data:", data);
+
+          const name = data.Name ?? data.name ?? "Unknown";
+          const course = data.Course ?? data.course ?? "No Course";
+          const section = data.Section ?? data.section ?? "—";
+
+          const rawScore = data.Score ?? data.score;
+          const score =
+            typeof rawScore === "number"
+              ? rawScore
+              : parseFloat(rawScore ?? "0") || 0;
+
+          const answers = data.answers || [];
+
+          records.push({
+            course,
+            section,
+            name,
+            score,
+            answers
+          });
+        }
+
+        console.log("[DEBUG] total records gathered:", records.length);
+
+        if (!records.length) {
+          setStatus("No data found.", false);
+          dataContainer.innerHTML =
+            '<div style="padding:10px;font-size:0.9rem;color:#9ca3af;">No submissions to display.</div>';
+          rowCountEl.textContent = "0";
+          return;
+        }
+
+        buildAccordion(records);
+        setStatus("Data loaded.");
+        lastUpdatedEl.textContent = "Last updated: " + formatTimestamp();
+      } catch (err) {
+        console.error("Error in loadData:", err);
+        setStatus("Error loading data: " + err.message, true);
       }
-
-      const records = [];
-      snap.forEach(doc => {
-        const data = doc.data();
-        console.log("[DEBUG] record:", doc.id, data);
-
-        records.push({
-          id: doc.id,
-          name: data.Name ?? "Unknown",
-          course: data.Course ?? "Unknown",
-          score: data.Score ?? "—",
-          section: data.Section ?? "—"
-        });
-      });
-
-      render(records);
-      setStatus("Loaded " + records.length + " submissions.");
     }
-    catch (err) {
-      console.error(err);
-      setStatus("Error: " + err.message, true);
-    }
-  }
 
-  function render(records) {
-    const html = `
-      <details open>
-        <summary>ANSCI2025Final – ${records.length} submissions</summary>
-        <table>
-          <thead>
+    function groupByCourseAndSection(records) {
+      const map = {};
+      for (const r of records) {
+        if (!map[r.course]) {
+          map[r.course] = {};
+        }
+        if (!map[r.course][r.section]) {
+          map[r.course][r.section] = [];
+        }
+        map[r.course][r.section].push(r);
+      }
+      console.log("[DEBUG] grouped map:", map);
+      return map;
+    }
+
+    function buildAccordion(records) {
+      const grouped = groupByCourseAndSection(records);
+
+      dataContainer.innerHTML = "";
+      allRows = [];
+      let globalRowCount = 0;
+
+      const sortedCourses = Object.keys(grouped).sort();
+      console.log("[DEBUG] sortedCourses:", sortedCourses);
+
+      for (const course of sortedCourses) {
+        const courseSections = grouped[course];
+        const courseBlock = document.createElement("details");
+        courseBlock.className = "course-block";
+
+        const totalInCourse = Object.values(courseSections).reduce(
+          (sum, arr) => sum + arr.length,
+          0
+        );
+
+        const courseSummary = document.createElement("summary");
+        courseSummary.innerHTML = `
+          <div class="summary-main">
+            <span class="label">${course}</span>
+            <span class="meta">Sections: ${
+              Object.keys(courseSections).length
+            } • Records: ${totalInCourse}</span>
+          </div>
+          <span class="summary-chevron">▶</span>
+        `;
+        courseBlock.appendChild(courseSummary);
+
+        const sectionAccordion = document.createElement("div");
+        sectionAccordion.className = "accordion";
+
+        const sortedSections = Object.keys(courseSections).sort();
+        console.log("[DEBUG] course", course, "sortedSections:", sortedSections);
+
+        for (const section of sortedSections) {
+          const rows = courseSections[section];
+          const sectionBlock = document.createElement("details");
+          sectionBlock.className = "section-block";
+
+          const sectionSummary = document.createElement("summary");
+          sectionSummary.innerHTML = `
+            <div class="summary-main">
+              <span class="label">Section ${section}</span>
+              <span class="meta">Records: ${rows.length}</span>
+            </div>
+            <span class="summary-chevron">▶</span>
+          `;
+          sectionBlock.appendChild(sectionSummary);
+
+          const inner = document.createElement("div");
+          inner.className = "section-inner";
+          inner.innerHTML = `
+            <div class="section-caption">
+              Use the search box above to filter. Click "Download PDF" to save a student's answer sheet.
+            </div>
+          `;
+
+          const tableWrap = document.createElement("div");
+          tableWrap.className = "table-wrap";
+
+          const table = document.createElement("table");
+          const thead = document.createElement("thead");
+          thead.innerHTML = `
             <tr>
               <th>Name</th>
               <th>Course</th>
               <th>Section</th>
               <th>Score</th>
-              <th>Attempt ID</th>
+              <th>Actions</th>
             </tr>
-          </thead>
-          <tbody>
-            ${records.map(r => `
-              <tr>
-                <td>${r.name}</td>
-                <td>${r.course}</td>
-                <td>${r.section}</td>
-                <td>${r.score}</td>
-                <td>${r.id}</td>
-              </tr>
-            `).join("")}
-          </tbody>
-        </table>
-      </details>
-    `;
+          `;
+          table.appendChild(thead);
 
-    container.innerHTML = html;
-  }
+          const tbody = document.createElement("tbody");
 
-  loadData();
-</script>
+          rows.forEach((r) => {
+            const tr = document.createElement("tr");
+            tr.dataset.name = r.name.toLowerCase();
+            tr.dataset.course = r.course.toLowerCase();
+            tr.dataset.section = r.section.toLowerCase();
 
+            const tdName = document.createElement("td");
+            tdName.textContent = r.name;
+
+            const tdCourse = document.createElement("td");
+            tdCourse.textContent = r.course;
+
+            const tdSection = document.createElement("td");
+            tdSection.textContent = r.section || "—";
+
+            const tdScore = document.createElement("td");
+            tdScore.textContent = isNaN(r.score) ? "-" : r.score;
+
+            const tdActions = document.createElement("td");
+            const btn = document.createElement("button");
+            btn.className = "download-btn";
+            btn.type = "button";
+            btn.textContent = "Download PDF";
+            btn.addEventListener("click", () => downloadPdf(r));
+            tdActions.appendChild(btn);
+
+            tr.appendChild(tdName);
+            tr.appendChild(tdCourse);
+            tr.appendChild(tdSection);
+            tr.appendChild(tdScore);
+            tr.appendChild(tdActions);
+
+            tbody.appendChild(tr);
+            allRows.push(tr);
+            globalRowCount++;
+          });
+
+          table.appendChild(tbody);
+          tableWrap.appendChild(table);
+          inner.appendChild(tableWrap);
+          sectionBlock.appendChild(inner);
+          sectionAccordion.appendChild(sectionBlock);
+        }
+
+        courseBlock.appendChild(sectionAccordion);
+        dataContainer.appendChild(courseBlock);
+      }
+
+      rowCountEl.textContent = globalRowCount.toString();
+      console.log("[DEBUG] globalRowCount:", globalRowCount);
+    }
+
+    function normalizeAnswers(raw) {
+      if (!raw) return [];
+      if (Array.isArray(raw)) return raw;
+
+      if (typeof raw === "object") {
+        return Object.keys(raw)
+          .sort((a, b) => Number(a) - Number(b))
+          .map((k) => raw[k]);
+      }
+      return [];
+    }
+
+    function downloadPdf(record) {
+      if (typeof window.html2pdf === "undefined") {
+        alert("PDF library not loaded.");
+        return;
+      }
+
+      const container = document.createElement("div");
+      container.style.padding = "16px";
+      container.style.fontFamily =
+        "system-ui, -apple-system, BlinkMacSystemFont, 'Segoe UI', sans-serif";
+      container.style.color = "#111827";
+      container.style.backgroundColor = "#ffffff";
+      container.style.fontSize = "12px";
+
+      const title = document.createElement("h2");
+      title.textContent = "Final Exam Answer Sheet";
+      title.style.marginTop = "0";
+      container.appendChild(title);
+
+      const meta = document.createElement("p");
+      meta.innerHTML =
+        "<strong>Name:</strong> " + record.name + "<br>" +
+        "<strong>Course:</strong> " + record.course + "<br>" +
+        "<strong>Section:</strong> " + (record.section || "—") + "<br>" +
+        "<strong>Score:</strong> " + (isNaN(record.score) ? "-" : record.score);
+      container.appendChild(meta);
+
+      const hr = document.createElement("hr");
+      container.appendChild(hr);
+
+      const answersTitle = document.createElement("h3");
+      answersTitle.textContent = "Answers";
+      answersTitle.style.marginTop = "8px";
+      container.appendChild(answersTitle);
+
+      const answers = normalizeAnswers(record.answers);
+      if (!answers.length) {
+        const p = document.createElement("p");
+        p.textContent = "No detailed answer data available.";
+        container.appendChild(p);
+      } else {
+        const table = document.createElement("table");
+        table.style.width = "100%";
+        table.style.borderCollapse = "collapse";
+        table.style.fontSize = "11px";
+
+        const thead = document.createElement("thead");
+        const hdrRow = document.createElement("tr");
+        ["#", "Chosen", "Correct", "Verdict", "Options"].forEach((txt) => {
+          const th = document.createElement("th");
+          th.textContent = txt;
+          th.style.border = "1px solid #d1d5db";
+          th.style.padding = "4px 6px";
+          th.style.backgroundColor = "#f3f4f6";
+          th.style.textAlign = "left";
+          hdrRow.appendChild(th);
+        });
+        thead.appendChild(hdrRow);
+        table.appendChild(thead);
+
+        const tbody = document.createElement("tbody");
+
+        answers.forEach((ans, idx) => {
+          const tr = document.createElement("tr");
+
+          const tdIdx = document.createElement("td");
+          tdIdx.textContent = String(idx + 1);
+          tdIdx.style.border = "1px solid #e5e7eb";
+          tdIdx.style.padding = "4px 6px";
+
+          const tdChosen = document.createElement("td");
+          tdChosen.textContent = ans.chosenAnswer ?? "";
+          tdChosen.style.border = "1px solid #e5e7eb";
+          tdChosen.style.padding = "4px 6px";
+
+          const tdCorrect = document.createElement("td");
+          tdCorrect.textContent = ans.correctAnswer ?? "";
+          tdCorrect.style.border = "1px solid #e5e7eb";
+          tdCorrect.style.padding = "4px 6px";
+
+          const tdVerdict = document.createElement("td");
+          tdVerdict.textContent =
+            ans.isCorrect === true
+              ? "Correct"
+              : ans.isCorrect === false
+              ? "Incorrect"
+              : "";
+          tdVerdict.style.border = "1px solid #e5e7eb";
+          tdVerdict.style.padding = "4px 6px";
+
+          const tdOptions = document.createElement("td");
+          const opts = ans.options || {};
+          const pieces = [];
+          for (const key in opts) {
+            if (Object.prototype.hasOwnProperty.call(opts, key)) {
+              pieces.push(key + ": " + opts[key]);
+            }
+          }
+          tdOptions.textContent = pieces.join("; ");
+          tdOptions.style.border = "1px solid #e5e7eb";
+          tdOptions.style.padding = "4px 6px";
+
+          tr.appendChild(tdIdx);
+          tr.appendChild(tdChosen);
+          tr.appendChild(tdCorrect);
+          tr.appendChild(tdVerdict);
+          tr.appendChild(tdOptions);
+
+          tbody.appendChild(tr);
+        });
+
+        table.appendChild(tbody);
+        container.appendChild(table);
+      }
+
+      document.body.appendChild(container);
+
+      const filename =
+        sanitizeFilenamePart(record.name) +
+        "-" +
+        sanitizeFilenamePart(record.course) +
+        ".pdf";
+
+      const opt = {
+        margin: 10,
+        filename,
+        image: { type: "jpeg", quality: 0.98 },
+        html2canvas: { scale: 2, useCORS: true },
+        jsPDF: { unit: "mm", format: "a4", orientation: "portrait" }
+      };
+
+      window.html2pdf()
+        .set(opt)
+        .from(container)
+        .save()
+        .then(() => {
+          document.body.removeChild(container);
+        })
+        .catch((err) => {
+          console.error("Error generating PDF:", err);
+          document.body.removeChild(container);
+        });
+    }
+
+    function applySearchFilter(query) {
+      const q = (query || "").trim().toLowerCase();
+      const hasQuery = q.length > 0;
+      console.log("[DEBUG] applySearchFilter query:", q);
+
+      allRows.forEach((tr) => {
+        if (!hasQuery) {
+          tr.classList.remove("hidden");
+          return;
+        }
+        const haystack =
+          tr.dataset.name +
+          " " +
+          tr.dataset.course +
+          " " +
+          tr.dataset.section;
+
+        if (haystack.includes(q)) {
+          tr.classList.remove("hidden");
+        } else {
+          tr.classList.add("hidden");
+        }
+      });
+    }
+
+    searchInput.addEventListener("input", (e) => {
+      applySearchFilter(e.target.value);
+    });
+
+    console.log("[DEBUG] Calling loadData()…");
+    loadData();
+  </script>
 </body>
 </html>
