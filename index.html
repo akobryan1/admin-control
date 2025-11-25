@@ -5,467 +5,689 @@
   <title>Final Exam Results Viewer</title>
   <meta name="viewport" content="width=device-width, initial-scale=1" />
 
-  <!-- Kill cache during development -->
+  <!-- Kill aggressive caching while we debug -->
   <meta http-equiv="Cache-Control" content="no-cache, no-store, must-revalidate" />
   <meta http-equiv="Pragma" content="no-cache" />
   <meta http-equiv="Expires" content="0" />
-  <meta name="version" content="build-KZ-collectionGroup-1">
+  <meta name="version" content="build-kz-ansheets-optB-normA-1">
 
   <style>
     :root {
       --bg: #020617;
+      --bg-soft: #020819;
+      --card: #020617;
       --border-soft: #1f2937;
+      --accent: #22d3ee;
+      --accent-soft: rgba(34, 211, 238, 0.18);
       --text: #e5e7eb;
       --muted: #9ca3af;
-      --accent: #22d3ee;
       --danger: #f87171;
+      --radius-lg: 18px;
+      --radius-md: 12px;
+      --shadow-soft: 0 20px 45px rgba(15, 23, 42, 0.8);
+    }
+
+    * {
+      box-sizing: border-box;
     }
 
     body {
       margin: 0;
-      font-family: system-ui, sans-serif;
-      background: #020617;
+      font-family: system-ui, -apple-system, BlinkMacSystemFont, "Segoe UI",
+        Roboto, Ubuntu, "Helvetica Neue", Arial, sans-serif;
+      background: radial-gradient(circle at top left, #0b1120 0, #020617 50%);
       color: var(--text);
+      min-height: 100vh;
     }
 
     .page {
       max-width: 1100px;
-      margin: auto;
-      padding: 24px;
+      margin: 0 auto;
+      padding: 20px 16px 40px;
     }
 
-    h1 { margin-bottom: 6px; }
+    header {
+      margin-bottom: 20px;
+    }
+
+    h1 {
+      margin: 0 0 4px;
+      font-size: 1.6rem;
+      letter-spacing: 0.03em;
+    }
 
     .subtitle {
       color: var(--muted);
-      margin-bottom: 20px;
       font-size: 0.9rem;
     }
 
     .toolbar {
       display: flex;
+      flex-wrap: wrap;
       gap: 12px;
       align-items: center;
-      margin-bottom: 16px;
-      flex-wrap: wrap;
+      margin: 18px 0 14px;
     }
 
     .search-wrap {
       position: relative;
-      flex: 1;
+      flex: 1 1 220px;
       max-width: 420px;
     }
 
     .search-wrap input {
       width: 100%;
-      padding: 9px 32px;
+      padding: 9px 32px 9px 32px;
       border-radius: 999px;
       border: 1px solid var(--border-soft);
-      background: #0f172a;
+      background: radial-gradient(
+          circle at top left,
+          rgba(148, 163, 184, 0.25) 0,
+          rgba(30, 64, 175, 0.02) 40%,
+          rgba(15, 23, 42, 0.9) 100%
+        );
       color: var(--text);
+      outline: none;
+      font-size: 0.9rem;
+    }
+
+    .search-wrap input::placeholder {
+      color: #64748b;
+    }
+
+    .search-wrap span {
+      position: absolute;
+      left: 10px;
+      top: 50%;
+      transform: translateY(-50%);
+      font-size: 0.9rem;
+      color: #64748b;
+    }
+
+    .search-wrap .kbd {
+      position: absolute;
+      right: 12px;
+      top: 50%;
+      transform: translateY(-50%);
+      font-size: 0.7rem;
+      padding: 2px 6px;
+      border-radius: 999px;
+      border: 1px solid rgba(148, 163, 184, 0.4);
+      color: #9ca3af;
     }
 
     .pill-info {
-      font-size: 0.85rem;
-      padding: 4px 10px;
+      font-size: 0.8rem;
+      padding: 3px 10px;
       border-radius: 999px;
-      border: 1px solid #334155;
-      background: #0f172a;
+      border: 1px solid rgba(148, 163, 184, 0.45);
+      background: rgba(15, 23, 42, 0.8);
+      color: #cbd5f5;
+    }
+
+    .pill-info strong {
+      color: var(--accent);
     }
 
     .card {
-      border-radius: 16px;
-      padding: 16px;
-      background: #0f172a;
-      border: 1px solid #1e293b;
+      border-radius: var(--radius-lg);
+      padding: 16px 14px 10px;
+      background:
+        radial-gradient(circle at top left, rgba(56, 189, 248, 0.16), transparent 55%),
+        radial-gradient(circle at bottom right, rgba(37, 99, 235, 0.28), #020617 70%);
+      box-shadow: var(--shadow-soft);
+      border: 1px solid rgba(15, 23, 42, 0.85);
     }
 
     .status-bar {
       display: flex;
       justify-content: space-between;
-      margin-bottom: 10px;
+      gap: 8px;
+      align-items: center;
+      margin-bottom: 8px;
+      font-size: 0.8rem;
       color: var(--muted);
-      font-size: 0.85rem;
-      gap: 12px;
-      flex-wrap: wrap;
     }
 
     #statusText span.dot {
+      display: inline-block;
       width: 7px;
       height: 7px;
-      background: var(--accent);
       border-radius: 999px;
-      display: inline-block;
       margin-right: 6px;
+      background: var(--accent);
+      box-shadow: 0 0 7px rgba(45, 212, 191, 0.9);
+    }
+
+    #statusText.error span.dot {
+      background: var(--danger);
+      box-shadow: 0 0 7px rgba(248, 113, 113, 0.9);
+    }
+
+    .accordion {
+      margin-top: 6px;
+      display: flex;
+      flex-direction: column;
+      gap: 10px;
     }
 
     details.course-block,
     details.section-block {
-      border: 1px solid #334155;
-      border-radius: 10px;
-      margin-bottom: 10px;
-      background: #0f172a;
+      border-radius: var(--radius-md);
+      border: 1px solid rgba(148, 163, 184, 0.35);
+      background: rgba(15, 23, 42, 0.8);
+      padding: 0;
+      overflow: hidden;
+    }
+
+    details.course-block[open],
+    details.section-block[open] {
+      border-color: rgba(56, 189, 248, 0.7);
+      box-shadow: 0 0 0 1px rgba(56, 189, 248, 0.25);
     }
 
     details > summary {
+      list-style: none;
+      padding: 9px 12px;
       cursor: pointer;
-      padding: 10px 14px;
       display: flex;
-      justify-content: space-between;
       align-items: center;
+      justify-content: space-between;
+      gap: 8px;
+      user-select: none;
     }
 
-    .summary-title {
+    details > summary::-webkit-details-marker {
+      display: none;
+    }
+
+    .summary-main {
+      display: flex;
+      align-items: baseline;
+      gap: 6px;
+      font-size: 0.92rem;
+    }
+
+    .summary-main .label {
       font-weight: 600;
+      letter-spacing: 0.02em;
     }
 
-    .summary-meta {
+    .summary-main .meta {
       font-size: 0.8rem;
       color: var(--muted);
-      margin-left: 8px;
+    }
+
+    .summary-chevron {
+      font-size: 0.85rem;
+      color: #64748b;
+      margin-left: 4px;
+      transition: transform 0.18s ease;
+    }
+
+    details[open] .summary-chevron {
+      transform: rotate(90deg);
+      color: #e2e8f0;
     }
 
     .section-inner {
-      padding: 12px;
+      padding: 4px 10px 10px;
+      border-top: 1px solid rgba(15, 23, 42, 0.9);
+      background: radial-gradient(circle at top left, rgba(148, 163, 184, 0.16), transparent 60%);
+    }
+
+    .section-inner .section-caption {
+      font-size: 0.8rem;
+      color: var(--muted);
+      margin: 2px 0 6px;
+    }
+
+    .table-wrap {
+      overflow-x: auto;
+      border-radius: 10px;
+      border: 1px solid rgba(31, 41, 55, 0.9);
+      background: rgba(15, 23, 42, 0.88);
     }
 
     table {
       width: 100%;
       border-collapse: collapse;
-      font-size: 0.88rem;
+      font-size: 0.86rem;
+      min-width: 520px;
+    }
+
+    thead {
+      background: linear-gradient(to right, rgba(15, 23, 42, 0.9), #020617);
     }
 
     th,
     td {
       padding: 8px 10px;
-      border-bottom: 1px solid #1e293b;
+      text-align: left;
+      border-bottom: 1px solid rgba(30, 41, 59, 0.7);
       white-space: nowrap;
     }
 
+    th {
+      font-weight: 500;
+      color: #e5e7eb;
+      position: sticky;
+      top: 0;
+      background: linear-gradient(to right, rgba(15, 23, 42, 0.96), #020617);
+      z-index: 2;
+    }
+
     tbody tr:nth-child(even) {
-      background: #1e293b44;
+      background: rgba(15, 23, 42, 0.75);
+    }
+
+    tbody tr:nth-child(odd) {
+      background: rgba(15, 23, 42, 0.45);
     }
 
     tbody tr:hover {
-      background: #1e40af55;
-    }
-
-    .download-btn {
-      padding: 4px 10px;
-      font-size: 0.78rem;
-      border: 1px solid var(--accent);
-      background: #0f172a;
-      color: #e0f2fe;
-      border-radius: 999px;
-      cursor: pointer;
+      background: rgba(30, 64, 175, 0.35);
     }
 
     .hidden {
       display: none !important;
     }
+
+    .download-btn {
+      border-radius: 999px;
+      border: 1px solid rgba(56, 189, 248, 0.8);
+      background: rgba(15, 23, 42, 0.9);
+      color: #e0f2fe;
+      font-size: 0.78rem;
+      padding: 4px 10px;
+      cursor: pointer;
+      transition: background 0.15s ease, transform 0.05s ease, box-shadow 0.15s ease;
+      box-shadow: 0 0 0 1px rgba(15, 23, 42, 0.9);
+    }
+
+    .download-btn:hover {
+      background: rgba(56, 189, 248, 0.16);
+      transform: translateY(-0.5px);
+      box-shadow: 0 0 0 1px rgba(56, 189, 248, 0.3);
+    }
+
+    .download-btn:active {
+      transform: translateY(0);
+      box-shadow: none;
+    }
+
+    @media (max-width: 640px) {
+      h1 {
+        font-size: 1.3rem;
+      }
+      .card {
+        padding: 14px 10px 10px;
+      }
+    }
   </style>
 </head>
 <body>
-<div class="page">
-  <h1>Final Exam Submissions</h1>
-  <div class="subtitle">
-    Loaded via <code>collectionGroup("attempts")</code> filtered to
-    <code>finals-exam / KzRzubb5df1TV1gL2RuF / submissions / … / attempts / attempt*</code>,
-    grouped by <strong>Course</strong> &amp; <strong>Section</strong>.
+  <div class="page">
+    <header>
+      <h1>Final Exam Submissions</h1>
+      <div class="subtitle">
+        Viewer for
+        <code>finals-exam / KzRzubb5df1TV1gL2RuF / submissions / [student] / attempts / attempt1</code><br />
+        Grouped by <strong>Course</strong> &amp; <strong>Section</strong><br />
+        Courses (normalized):
+        <code>Crop Science Final Exam</code>,
+        <code>Agricultural Biotechnology Final Exam</code>
+      </div>
+    </header>
+
+    <div class="toolbar">
+      <div class="search-wrap">
+        <span>🔍</span>
+        <input
+          id="searchInput"
+          type="text"
+          placeholder="Search by name, course, section…"
+          autocomplete="off"
+        />
+        <div class="kbd">Ctrl+F</div>
+      </div>
+
+      <div class="pill-info">
+        Loaded rows: <strong id="rowCount">0</strong>
+      </div>
+    </div>
+
+    <div class="card">
+      <div class="status-bar">
+        <div id="statusText"><span class="dot"></span><span>Connecting to Firestore…</span></div>
+        <div id="lastUpdated">Last updated: —</div>
+      </div>
+
+      <div id="dataContainer" class="accordion"></div>
+    </div>
   </div>
 
-  <div class="toolbar">
-    <div class="search-wrap">
-      <input id="searchInput" placeholder="Search by name, course, section…" />
-    </div>
-    <div class="pill-info">
-      Loaded rows: <strong id="rowCount">0</strong>
-    </div>
-  </div>
+  <!-- jsPDF for PDF downloads -->
+  <script src="https://cdnjs.cloudflare.com/ajax/libs/jspdf/2.5.1/jspdf.umd.min.js"></script>
 
-  <div class="card">
-    <div class="status-bar">
-      <div id="statusText"><span class="dot"></span>Connecting…</div>
-      <div id="lastUpdated">Last updated: —</div>
-    </div>
+  <!-- Firebase + Firestore (module) -->
+  <script type="module">
+    import { initializeApp } from "https://www.gstatic.com/firebasejs/11.0.1/firebase-app.js";
+    import {
+      getFirestore,
+      collection,
+      getDocs
+    } from "https://www.gstatic.com/firebasejs/11.0.1/firebase-firestore.js";
 
-    <div id="dataContainer" class="accordion"></div>
-  </div>
-</div>
+    console.log("[DEBUG] Script loaded, starting Firebase init…");
 
-<!-- jsPDF -->
-<script src="https://cdnjs.cloudflare.com/ajax/libs/jspdf/2.5.1/jspdf.umd.min.js"></script>
+    const firebaseConfig = {
+      apiKey: "AIzaSyB-idZOq8h9sVttNdzXE2t8FMoYI_snq7g",
+      authDomain: "kuya-quiz-100.firebaseapp.com",
+      projectId: "kuya-quiz-100",
+      storageBucket: "kuya-quiz-100.firebasestorage.app",
+      messagingSenderId: "74623975270",
+      appId: "1:74623975270:web:dec2b21dbee017292952a7"
+    };
 
-<script type="module">
-  import { initializeApp } from "https://www.gstatic.com/firebasejs/11.0.1/firebase-app.js";
-  import {
-    getFirestore,
-    collectionGroup,
-    getDocs
-  } from "https://www.gstatic.com/firebasejs/11.0.1/firebase-firestore.js";
+    console.log("[DEBUG] firebaseConfig:", firebaseConfig);
 
-  console.log("[DEBUG] Script running with collectionGroup…");
+    const app = initializeApp(firebaseConfig);
+    const db = getFirestore(app);
 
-  const firebaseConfig = {
-    apiKey: "AIzaSyB-idZOq8h9sVttNdzXE2t8FMoYI_snq7g",
-    authDomain: "kuya-quiz-100.firebaseapp.com",
-    projectId: "kuya-quiz-100",
-    storageBucket: "kuya-quiz-100.firebasestorage.app",
-    messagingSenderId: "74623975270",
-    appId: "1:74623975270:web:dec2b21dbee017292952a7"
-  };
+    console.log("[DEBUG] Firebase app initialized:", app.name);
 
-  const app = initializeApp(firebaseConfig);
-  const db = getFirestore(app);
+    // Parent doc that holds both CropSci + AgBiotech finals
+    const COURSE_CONTAINER_DOC_ID = "KzRzubb5df1TV1gL2RuF";
+    const submissionsCollectionName = "submissions";
+    const attemptsCollectionName = "attempts";
 
-  console.log("[DEBUG] Firebase initialized");
+    const dataContainer = document.getElementById("dataContainer");
+    const statusText = document.getElementById("statusText");
+    const rowCountEl = document.getElementById("rowCount");
+    const lastUpdatedEl = document.getElementById("lastUpdated");
+    const searchInput = document.getElementById("searchInput");
 
-  // We only want attempts under this parent doc
-  const COURSE_PARENT = "KzRzubb5df1TV1gL2RuF";
+    let allRows = [];
 
-  const dataContainer = document.getElementById("dataContainer");
-  const rowCountEl = document.getElementById("rowCount");
-  const statusText = document.getElementById("statusText");
-  const lastUpdatedEl = document.getElementById("lastUpdated");
-  const searchInput = document.getElementById("searchInput");
-
-  let allRows = [];
-
-  function setStatus(msg, error = false) {
-    statusText.innerHTML = `<span class="dot"></span>${msg}`;
-    statusText.style.color = error ? "#f87171" : "#9ca3af";
-    console.log("[STATUS]", msg);
-  }
-
-  function sanitize(str) {
-    return (str || "").toLowerCase();
-  }
-
-  function normalizeCourse(raw) {
-    if (!raw) return "Unknown Course";
-    const s = raw.toLowerCase().trim();
-
-    if (s.includes("crop") && s.includes("sci")) {
-      return "CropSci Final Exam";
-    }
-    if (s.includes("agricultural biotechnology") || s.includes("biotech")) {
-      return "Agricultural Biotechnology Final Exam";
-    }
-    return raw;
-  }
-
-  function formatTimestamp(date) {
-    const d = date ?? new Date();
-    const y = d.getFullYear();
-    const m = String(d.getMonth() + 1).padStart(2, "0");
-    const da = String(d.getDate()).padStart(2, "0");
-    const h = String(d.getHours()).padStart(2, "0");
-    const mi = String(d.getMinutes()).padStart(2, "0");
-    return `${y}-${m}-${da} ${h}:${mi}`;
-  }
-
-  function buildPDF(rec) {
-    if (!window.jspdf || !window.jspdf.jsPDF) {
-      alert("PDF library (jsPDF) not loaded.");
-      return;
+    function setStatus(message, isError = false) {
+      statusText.classList.toggle("error", isError);
+      const dot = '<span class="dot"></span>';
+      statusText.innerHTML = dot + "<span>" + message + "</span>";
+      console.log("[STATUS]", message);
     }
 
-    const { jsPDF } = window.jspdf;
-    const doc = new jsPDF();
-    let y = 15;
+    function formatTimestamp(date) {
+      const d = date ?? new Date();
+      return (
+        d.getFullYear() +
+        "-" +
+        String(d.getMonth() + 1).padStart(2, "0") +
+        "-" +
+        String(d.getDate()).padStart(2, "0") +
+        " " +
+        String(d.getHours()).padStart(2, "0") +
+        ":" +
+        String(d.getMinutes()).padStart(2, "0")
+      );
+    }
 
-    doc.setFontSize(14);
-    doc.text("Final Exam Answer Sheet", 10, y);
-    y += 10;
+    function sanitizeFileName(str) {
+      return (str || "student")
+        .toString()
+        .replace(/[^a-z0-9]+/gi, "_")
+        .replace(/^_+|_+$/g, "")
+        .toLowerCase();
+    }
 
-    doc.setFontSize(11);
-    doc.text("Name: " + (rec.name || ""), 10, y); y += 6;
-    doc.text("Course: " + (rec.course || ""), 10, y); y += 6;
-    doc.text("Section: " + (rec.section || "—"), 10, y); y += 6;
-    doc.text("Score: " + (rec.score ?? ""), 10, y); y += 10;
+    // Option A: normalize course names based on keywords
+    function normalizeCourseName(rawCourse) {
+      const s = (rawCourse || "").toLowerCase().trim();
+      if (!s) return "Unknown Course";
 
-    doc.text("Answers:", 10, y); y += 6;
-
-    const answers = Array.isArray(rec.attemptData.answers)
-      ? rec.attemptData.answers
-      : [];
-
-    answers.forEach((ans, i) => {
-      if (y > 280) {
-        doc.addPage();
-        y = 20;
+      // Anything with "crop" + "sci" goes to Crop Science Final Exam
+      if (s.includes("crop") && s.includes("sci")) {
+        return "Crop Science Final Exam";
       }
-      const chosen = ans.chosenAnswer ?? ans.chosen ?? "";
-      const correct = ans.correctAnswer ?? ans.correct ?? "";
-      const line = `${i + 1}. Chosen: ${chosen} | Correct: ${correct}`;
-      doc.text(line, 10, y);
-      y += 6;
-    });
 
-    const safeName = (rec.name || "student").replace(/[^a-z0-9]/gi, "_");
-    doc.save(`${safeName}_answers.pdf`);
-  }
+      // Anything with "agricultural" + "biotech" (or biotechnology)
+      if (
+        s.includes("agricultural") &&
+        (s.includes("biotech") || s.includes("biotechnology"))
+      ) {
+        return "Agricultural Biotechnology Final Exam";
+      }
 
-  async function loadData() {
-    try {
-      setStatus("Loading from Firestore (collectionGroup: attempts)…");
+      // Fallback to original string if nothing matches
+      // but capitalized a bit more nicely
+      return rawCourse || "Unknown Course";
+    }
 
-      // Get ALL attempts across DB
-      const attemptsRef = collectionGroup(db, "attempts");
-      const attemptsSnap = await getDocs(attemptsRef);
-      console.log("[DEBUG] collectionGroup(attempts) count:", attemptsSnap.size);
-
-      const records = [];
-
-      attemptsSnap.forEach(docSnap => {
-        const path = docSnap.ref.path;
-        // Expecting: finals-exam/{COURSE_PARENT}/submissions/{student}/attempts/{attemptId}
-        // Example: finals-exam/KzRzubb5df1TV1gL2RuF/submissions/.../attempts/attempt1
-        if (!path.startsWith(`finals-exam/${COURSE_PARENT}/submissions/`)) {
-          return; // skip other exams (e.g., ANSCI container)
-        }
-
-        const pathParts = path.split("/");
-        // [0]=finals-exam, [1]=KzRzubb..., [2]=submissions, [3]=studentId, [4]=attempts, [5]=attemptId
-        if (pathParts.length !== 6) return;
-        if (pathParts[4] !== "attempts") return;
-
-        const attemptId = pathParts[5];
-        // We only care about attempt docs (id may be "attempt1", "attempt2", etc.)
-        if (!attemptId.toLowerCase().includes("attempt")) {
-          return;
-        }
-
-        const data = docSnap.data() || {};
-
-        const rawCourse =
-          data.Course ??
-          data.course ??
-          data.CourseName ??
-          data.courseName ??
-          "Unknown Course";
-
-        const name =
-          data.Name ??
-          data.name ??
-          data.StudentName ??
-          data.studentName ??
-          "Unknown";
-
-        const section =
-          data.Section ??
-          data.section ??
-          data.SectionUsed ??
-          data.sectionUsed ??
-          "—";
-
-        const scoreVal = data.Score ?? data.score ?? data.TotalScore ?? data.totalScore;
-        const score = parseFloat(scoreVal ?? "0") || 0;
-
-        const normalizedCourse = normalizeCourse(rawCourse);
-
-        // Only keep the two finals we care about
-        if (
-          normalizedCourse !== "CropSci Final Exam" &&
-          normalizedCourse !== "Agricultural Biotechnology Final Exam"
-        ) {
-          return;
-        }
-
-        records.push({
-          name,
-          course: normalizedCourse,
-          section,
-          score,
-          attemptData: data,
-          path
-        });
-      });
-
-      console.log("[DEBUG] total records collected after filtering:", records.length);
-
-      if (!records.length) {
-        setStatus("No matching records found.");
-        dataContainer.innerHTML =
-          '<div style="padding:10px;font-size:0.9rem;color:#9ca3af;">No submissions to display.</div>';
+    function buildPdfForRecord(record) {
+      if (!window.jspdf || !window.jspdf.jsPDF) {
+        alert("PDF library (jsPDF) not loaded.");
         return;
       }
+      const { jsPDF } = window.jspdf;
+      const doc = new jsPDF();
 
-      buildUI(records);
-      setStatus("Data loaded.");
-      lastUpdatedEl.textContent = "Last updated: " + formatTimestamp();
-    } catch (err) {
-      console.error("[ERROR] loadData:", err);
-      setStatus("Error: " + err.message, true);
+      const course = record.course || "";
+      const name = record.name || "";
+      const section = record.section || "—";
+      const score = record.score ?? "";
+      const attempt = record.attemptData || {};
+      const answers = Array.isArray(attempt.answers) ? attempt.answers : [];
+
+      let y = 15;
+      doc.setFontSize(14);
+      doc.text("Final Exam Answer Sheet", 10, y);
+      y += 8;
+
+      doc.setFontSize(11);
+      doc.text("Name: " + name, 10, y); y += 6;
+      doc.text("Course: " + course, 10, y); y += 6;
+      doc.text("Section: " + section, 10, y); y += 6;
+      doc.text("Score: " + score, 10, y); y += 10;
+
+      doc.setFontSize(11);
+      doc.text("Answers:", 10, y); y += 6;
+
+      answers.forEach((ans, idx) => {
+        if (y > 280) {
+          doc.addPage();
+          y = 20;
+        }
+        const chosen = ans.chosenAnswer ?? ans.chosen ?? "";
+        const correct = ans.correctAnswer ?? ans.correct ?? "";
+        const isCorrect = ans.isCorrect === true ? "✔" : (ans.isCorrect === false ? "✘" : "");
+        const line =
+          String(idx + 1).padStart(2, "0") +
+          ". Chosen: " + chosen +
+          " | Correct: " + correct +
+          " " + isCorrect;
+        doc.text(line, 10, y);
+        y += 6;
+      });
+
+      const safeName = sanitizeFileName(name);
+      const safeCourse = sanitizeFileName(course);
+      const fileName = safeName + "_" + safeCourse + "_answers.pdf";
+      doc.save(fileName);
     }
-  }
 
-  function groupData(records) {
-    const map = {};
-    for (const r of records) {
-      if (!map[r.course]) map[r.course] = {};
-      const sectionKey = r.section || "—";
-      if (!map[r.course][sectionKey]) map[r.course][sectionKey] = [];
-      map[r.course][sectionKey].push(r);
+    async function loadData() {
+      try {
+        console.log("[DEBUG] loadData() started");
+        setStatus("Loading data from Firestore…");
+        const records = [];
+
+        const submissionsRef = collection(
+          db,
+          "finals-exam",
+          COURSE_CONTAINER_DOC_ID,
+          submissionsCollectionName
+        );
+        console.log("[DEBUG] submissionsRef path:", submissionsRef.path);
+
+        const submissionsSnap = await getDocs(submissionsRef);
+        console.log("[DEBUG] submissions doc count:", submissionsSnap.size);
+
+        for (const submissionDoc of submissionsSnap.docs) {
+          const attemptsRef = collection(
+            db,
+            "finals-exam",
+            COURSE_CONTAINER_DOC_ID,
+            submissionsCollectionName,
+            submissionDoc.id,
+            attemptsCollectionName
+          );
+
+          const attemptsSnap = await getDocs(attemptsRef);
+          console.log(
+            "[DEBUG] submission",
+            submissionDoc.id,
+            "attempts count:",
+            attemptsSnap.size
+          );
+
+          if (attemptsSnap.empty) continue;
+
+          let attemptDoc =
+            attemptsSnap.docs.find((d) => d.id === "attempt1") ||
+            attemptsSnap.docs[0];
+
+          const attemptData = attemptDoc.data() || {};
+
+          const rawName = attemptData.Name ?? attemptData.name ?? "Unknown";
+          const rawCourse =
+            attemptData.Course ?? attemptData.course ?? "Unknown Course";
+          const rawSection =
+            attemptData.Section ?? attemptData.section ?? "—";
+          const rawScore = attemptData.Score;
+
+          // Normalize course name (Option A)
+          const course = normalizeCourseName(rawCourse);
+          const name = rawName;
+          const section = rawSection || "—";
+          const score =
+            typeof rawScore === "number"
+              ? rawScore
+              : parseFloat(rawScore ?? "0") || 0;
+
+          records.push({
+            course,
+            section,
+            name,
+            score,
+            submissionId: submissionDoc.id,
+            attemptId: attemptDoc.id,
+            attemptData
+          });
+        }
+
+        console.log("[DEBUG] total records gathered:", records.length);
+
+        if (!records.length) {
+          setStatus("No data found.", false);
+          dataContainer.innerHTML =
+            '<div style="padding:10px;font-size:0.9rem;color:#9ca3af;">No submissions to display.</div>';
+          return;
+        }
+
+        buildAccordion(records);
+        setStatus("Data loaded.");
+        lastUpdatedEl.textContent = "Last updated: " + formatTimestamp();
+      } catch (err) {
+        console.error("Error in loadData:", err);
+        setStatus("Error loading data: " + err.message, true);
+      }
     }
-    return map;
-  }
 
-  function buildUI(records) {
-    const grouped = groupData(records);
-    allRows = [];
-    dataContainer.innerHTML = "";
+    function groupByCourseAndSection(records) {
+      const map = {};
+      for (const r of records) {
+        if (!map[r.course]) {
+          map[r.course] = {};
+        }
+        if (!map[r.course][r.section]) {
+          map[r.course][r.section] = [];
+        }
+        map[r.course][r.section].push(r);
+      }
+      return map;
+    }
 
-    const courseList = Object.keys(grouped).sort((a, b) => a.localeCompare(b));
+    function buildAccordion(records) {
+      const grouped = groupByCourseAndSection(records);
 
-    courseList.forEach(course => {
-      const courseBlock = document.createElement("details");
-      courseBlock.className = "course-block";
+      dataContainer.innerHTML = "";
+      allRows = [];
+      let globalRowCount = 0;
 
-      const sectionsMap = grouped[course];
-      const totalInCourse = Object.values(sectionsMap).reduce(
-        (sum, arr) => sum + arr.length,
-        0
-      );
-
-      const summary = document.createElement("summary");
-      summary.innerHTML = `
-        <div>
-          <span class="summary-title">${course}</span>
-          <span class="summary-meta">
-            Sections: ${Object.keys(sectionsMap).length} • Records: ${totalInCourse}
-          </span>
-        </div>
-      `;
-      courseBlock.appendChild(summary);
-
-      const sectionAccordion = document.createElement("div");
-
-      const sections = Object.keys(sectionsMap).sort((a, b) =>
+      const sortedCourses = Object.keys(grouped).sort((a, b) =>
         a.localeCompare(b)
       );
 
-      sections.forEach(section => {
-        const sectionBlock = document.createElement("details");
-        sectionBlock.className = "section-block";
+      for (const course of sortedCourses) {
+        const courseSections = grouped[course];
+        const courseBlock = document.createElement("details");
+        courseBlock.className = "course-block";
 
-        const label = section === "—" ? "No Section" : section;
+        const totalInCourse = Object.values(courseSections).reduce(
+          (sum, arr) => sum + arr.length,
+          0
+        );
 
-        const ssum = document.createElement("summary");
-        ssum.innerHTML = `
-          <div>
-            <span class="summary-title">Section ${label}</span>
-            <span class="summary-meta">Records: ${sectionsMap[section].length}</span>
+        const courseSummary = document.createElement("summary");
+        courseSummary.innerHTML = `
+          <div class="summary-main">
+            <span class="label">${course}</span>
+            <span class="meta">Sections: ${
+              Object.keys(courseSections).length
+            } • Records: ${totalInCourse}</span>
           </div>
+          <span class="summary-chevron">▶</span>
         `;
-        sectionBlock.appendChild(ssum);
+        courseBlock.appendChild(courseSummary);
 
-        const inner = document.createElement("div");
-        inner.className = "section-inner";
+        const sectionAccordion = document.createElement("div");
+        sectionAccordion.className = "accordion";
 
-        const table = document.createElement("table");
-        table.innerHTML = `
-          <thead>
+        const sortedSections = Object.keys(courseSections).sort((a, b) =>
+          a.localeCompare(b)
+        );
+
+        for (const section of sortedSections) {
+          const rows = courseSections[section];
+          const sectionBlock = document.createElement("details");
+          sectionBlock.className = "section-block";
+
+          const sectionLabel = section === "—" ? "No Section" : section;
+
+          const sectionSummary = document.createElement("summary");
+          sectionSummary.innerHTML = `
+            <div class="summary-main">
+              <span class="label">Section ${sectionLabel}</span>
+              <span class="meta">Records: ${rows.length}</span>
+            </div>
+            <span class="summary-chevron">▶</span>
+          `;
+          sectionBlock.appendChild(sectionSummary);
+
+          const inner = document.createElement("div");
+          inner.className = "section-inner";
+          inner.innerHTML = `
+            <div class="section-caption">
+              Use the search box above to filter by name, course, or section.
+            </div>
+          `;
+
+          const tableWrap = document.createElement("div");
+          tableWrap.className = "table-wrap";
+
+          const table = document.createElement("table");
+          const thead = document.createElement("thead");
+          thead.innerHTML = `
             <tr>
               <th>Name</th>
               <th>Course</th>
@@ -473,57 +695,91 @@
               <th>Score</th>
               <th>Actions</th>
             </tr>
-          </thead>
-        `;
-        const tbody = document.createElement("tbody");
-
-        sectionsMap[section].forEach(rec => {
-          const tr = document.createElement("tr");
-          tr.dataset.name = sanitize(rec.name);
-          tr.dataset.course = sanitize(rec.course);
-          tr.dataset.section = sanitize(rec.section);
-
-          tr.innerHTML = `
-            <td>${rec.name}</td>
-            <td>${rec.course}</td>
-            <td>${rec.section}</td>
-            <td>${rec.score}</td>
-            <td><button class="download-btn">Download PDF</button></td>
           `;
+          table.appendChild(thead);
 
-          tr.querySelector("button").onclick = () => buildPDF(rec);
+          const tbody = document.createElement("tbody");
 
-          tbody.appendChild(tr);
-          allRows.push(tr);
-        });
+          rows.forEach((r) => {
+            const tr = document.createElement("tr");
+            tr.dataset.name = (r.name || "").toLowerCase();
+            tr.dataset.course = (r.course || "").toLowerCase();
+            tr.dataset.section = (r.section || "").toLowerCase();
 
-        table.appendChild(tbody);
-        inner.appendChild(table);
-        sectionBlock.appendChild(inner);
-        sectionAccordion.appendChild(sectionBlock);
+            const tdName = document.createElement("td");
+            tdName.textContent = r.name;
+
+            const tdCourse = document.createElement("td");
+            tdCourse.textContent = r.course;
+
+            const tdSection = document.createElement("td");
+            tdSection.textContent = r.section || "—";
+
+            const tdScore = document.createElement("td");
+            tdScore.textContent = isNaN(r.score) ? "-" : r.score;
+
+            const tdActions = document.createElement("td");
+            const btn = document.createElement("button");
+            btn.className = "download-btn";
+            btn.textContent = "Download PDF";
+            btn.addEventListener("click", () => buildPdfForRecord(r));
+            tdActions.appendChild(btn);
+
+            tr.appendChild(tdName);
+            tr.appendChild(tdCourse);
+            tr.appendChild(tdSection);
+            tr.appendChild(tdScore);
+            tr.appendChild(tdActions);
+
+            tbody.appendChild(tr);
+            allRows.push(tr);
+            globalRowCount++;
+          });
+
+          table.appendChild(tbody);
+          tableWrap.appendChild(table);
+          inner.appendChild(tableWrap);
+          sectionBlock.appendChild(inner);
+          sectionAccordion.appendChild(sectionBlock);
+        }
+
+        courseBlock.appendChild(sectionAccordion);
+        dataContainer.appendChild(courseBlock);
+      }
+
+      rowCountEl.textContent = globalRowCount.toString();
+    }
+
+    function applySearchFilter(query) {
+      const q = (query || "").trim().toLowerCase();
+      const hasQuery = q.length > 0;
+
+      allRows.forEach((tr) => {
+        if (!hasQuery) {
+          tr.classList.remove("hidden");
+          return;
+        }
+        const haystack =
+          tr.dataset.name +
+          " " +
+          tr.dataset.course +
+          " " +
+          tr.dataset.section;
+
+        if (haystack.includes(q)) {
+          tr.classList.remove("hidden");
+        } else {
+          tr.classList.add("hidden");
+        }
       });
+    }
 
-      courseBlock.appendChild(sectionAccordion);
-      dataContainer.appendChild(courseBlock);
+    searchInput.addEventListener("input", (e) => {
+      applySearchFilter(e.target.value);
     });
 
-    rowCountEl.textContent = allRows.length.toString();
-  }
-
-  searchInput.addEventListener("input", e => {
-    const q = sanitize(e.target.value);
-    allRows.forEach(tr => {
-      const hay =
-        tr.dataset.name +
-        " " +
-        tr.dataset.course +
-        " " +
-        tr.dataset.section;
-      tr.classList.toggle("hidden", !hay.includes(q));
-    });
-  });
-
-  loadData();
-</script>
+    console.log("[DEBUG] Calling loadData()…");
+    loadData();
+  </script>
 </body>
 </html>
