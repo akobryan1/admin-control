@@ -206,12 +206,17 @@
 
   function normalizeCourse(raw) {
     if (!raw) return "Unknown Course";
-    const s = raw.toLowerCase();
+    const s = raw.toLowerCase().replace(/[^\w]/g, "");
 
-    if (s.includes("crop") && s.includes("sci")) return "CropSci Final Exam";
-    if (s.includes("biotech") || s.includes("biotechnology")) return "Agricultural Biotechnology Final Exam";
+    if (s.includes("cropsci") || s.includes("cropscience"))
+      return "Crop Science Final Exam";
 
-    return raw;
+    if (s.includes("agriculturalbiotechnology") ||
+        s.includes("biotech") ||
+        s.includes("biotechnology"))
+      return "Agricultural Biotechnology Final Exam";
+
+    return raw.trim();
   }
 
   function buildPDF(rec) {
