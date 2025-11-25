@@ -9,7 +9,7 @@
   <meta http-equiv="Cache-Control" content="no-cache, no-store, must-revalidate" />
   <meta http-equiv="Pragma" content="no-cache" />
   <meta http-equiv="Expires" content="0" />
-  <meta name="version" content="build-kz-ansheets-optB-normA-1">
+  <meta name="version" content="build-kz-ansheets-3courses-1">
 
   <style>
     :root {
@@ -134,7 +134,7 @@
       padding: 16px 14px 10px;
       background:
         radial-gradient(circle at top left, rgba(56, 189, 248, 0.16), transparent 55%),
-        radial-gradient(circle at bottom right, rgba(37, 99, 235, 0.28), #020617 70%);
+        radial-gradient(circle at bottom right, rgba(37, 99, 235, 0.28), #020617 70%;
       box-shadow: var(--shadow-soft);
       border: 1px solid rgba(15, 23, 42, 0.85);
     }
@@ -331,12 +331,15 @@
     <header>
       <h1>Final Exam Submissions</h1>
       <div class="subtitle">
-        Viewer for
+        Viewer for:
         <code>finals-exam / KzRzubb5df1TV1gL2RuF / submissions / [student] / attempts / attempt1</code><br />
+        and
+        <code>finals-exam / ANSCI2025Final / submissions / [student]</code><br />
         Grouped by <strong>Course</strong> &amp; <strong>Section</strong><br />
         Courses (normalized):
         <code>Crop Science Final Exam</code>,
-        <code>Agricultural Biotechnology Final Exam</code>
+        <code>Agricultural Biotechnology Final Exam</code>,
+        <code>Animal Science Final Exam</code>
       </div>
     </header>
 
@@ -397,8 +400,14 @@
 
     console.log("[DEBUG] Firebase app initialized:", app.name);
 
-    // Parent doc that holds both CropSci + AgBiotech finals
-    const COURSE_CONTAINER_DOC_ID = "KzRzubb5df1TV1gL2RuF";
+    // Parents we read from:
+    // - KzRzubb5df1TV1gL2RuF : CropSci + Ag Biotech
+    // - ANSCI2025Final      : Animal Science
+    const COURSE_PARENT_IDS = [
+      "KzRzubb5df1TV1gL2RuF",
+      "ANSCI2025Final"
+    ];
+
     const submissionsCollectionName = "submissions";
     const attemptsCollectionName = "attempts";
 
@@ -440,17 +449,15 @@
         .toLowerCase();
     }
 
-    // Option A: normalize course names based on keywords
+    // Normalize course names so we can group them
     function normalizeCourseName(rawCourse) {
       const s = (rawCourse || "").toLowerCase().trim();
       if (!s) return "Unknown Course";
 
-      // Anything with "crop" + "sci" goes to Crop Science Final Exam
       if (s.includes("crop") && s.includes("sci")) {
         return "Crop Science Final Exam";
       }
 
-      // Anything with "agricultural" + "biotech" (or biotechnology)
       if (
         s.includes("agricultural") &&
         (s.includes("biotech") || s.includes("biotechnology"))
@@ -458,8 +465,10 @@
         return "Agricultural Biotechnology Final Exam";
       }
 
-      // Fallback to original string if nothing matches
-      // but capitalized a bit more nicely
+      if (s.includes("animal") && s.includes("science")) {
+        return "Animal Science Final Exam";
+      }
+
       return rawCourse || "Unknown Course";
     }
 
@@ -521,71 +530,109 @@
         setStatus("Loading data from Firestore…");
         const records = [];
 
-        const submissionsRef = collection(
-          db,
-          "finals-exam",
-          COURSE_CONTAINER_DOC_ID,
-          submissionsCollectionName
-        );
-        console.log("[DEBUG] submissionsRef path:", submissionsRef.path);
-
-        const submissionsSnap = await getDocs(submissionsRef);
-        console.log("[DEBUG] submissions doc count:", submissionsSnap.size);
-
-        for (const submissionDoc of submissionsSnap.docs) {
-          const attemptsRef = collection(
+        // Loop through each exam parent (CropSci+Biotech, Animal Science)
+        for (const parentId of COURSE_PARENT_IDS) {
+          const submissionsRef = collection(
             db,
             "finals-exam",
-            COURSE_CONTAINER_DOC_ID,
-            submissionsCollectionName,
-            submissionDoc.id,
-            attemptsCollectionName
+            parentId,
+            submissionsCollectionName
           );
+          console.log("[DEBUG] submissionsRef path for parent", parentId, ":", submissionsRef.path);
 
-          const attemptsSnap = await getDocs(attemptsRef);
-          console.log(
-            "[DEBUG] submission",
-            submissionDoc.id,
-            "attempts count:",
-            attemptsSnap.size
-          );
+          const submissionsSnap = await getDocs(submissionsRef);
+          console.log("[DEBUG] submissions doc count for parent", parentId, ":", submissionsSnap.size);
 
-          if (attemptsSnap.empty) continue;
+          for (const submissionDoc of submissionsSnap.docs) {
+            const submissionRaw = submissionDoc.data() || {};
 
-          let attemptDoc =
-            attemptsSnap.docs.find((d) => d.id === "attempt1") ||
-            attemptsSnap.docs[0];
+            // Try to read attempts/attempt1 (CropSci & Biotech)
+            const attemptsRef = collection(
+              db,
+              "finals-exam",
+              parentId,
+              submissionsCollectionName,
+              submissionDoc.id,
+              attemptsCollectionName
+            );
+            const attemptsSnap = await getDocs(attemptsRef);
+            console.log(
+              "[DEBUG] parent",
+              parentId,
+              "submission",
+              submissionDoc.id,
+              "attempts count:",
+              attemptsSnap.size
+            );
 
-          const attemptData = attemptDoc.data() || {};
+            let attemptData;
+            let attemptIdLabel;
 
-          const rawName = attemptData.Name ?? attemptData.name ?? "Unknown";
-          const rawCourse =
-            attemptData.Course ?? attemptData.course ?? "Unknown Course";
-          const rawSection =
-            attemptData.Section ?? attemptData.section ?? "—";
-          const rawScore = attemptData.Score;
+            if (!attemptsSnap.empty) {
+              // CropSci / Biotech style: answers under attempts/attempt1
+              const attemptDoc =
+                attemptsSnap.docs.find((d) => d.id === "attempt1") ||
+                attemptsSnap.docs[0];
+              attemptData = attemptDoc.data() || {};
+              attemptIdLabel = attemptDoc.id;
+            } else {
+              // Animal Science style: answers directly under student doc
+              attemptData = submissionRaw;
+              attemptIdLabel = "(direct)";
+            }
 
-          // Normalize course name (Option A)
-          const course = normalizeCourseName(rawCourse);
-          const name = rawName;
-          const section = rawSection || "—";
-          const score =
-            typeof rawScore === "number"
-              ? rawScore
-              : parseFloat(rawScore ?? "0") || 0;
+            // Pull fields from attempt first, then fall back to submission doc
+            const rawName =
+              attemptData.Name ??
+              attemptData.name ??
+              submissionRaw.Name ??
+              submissionRaw.name ??
+              "Unknown";
 
-          records.push({
-            course,
-            section,
-            name,
-            score,
-            submissionId: submissionDoc.id,
-            attemptId: attemptDoc.id,
-            attemptData
-          });
+            const rawCourse =
+              attemptData.Course ??
+              attemptData.course ??
+              submissionRaw.Course ??
+              submissionRaw.course ??
+              "Unknown Course";
+
+            const rawSection =
+              attemptData.Section ??
+              attemptData.section ??
+              submissionRaw.Section ??
+              submissionRaw.section ??
+              "—";
+
+            const rawScore =
+              attemptData.Score ??
+              submissionRaw.Score;
+
+            const course = normalizeCourseName(rawCourse);
+            const name = rawName;
+            const section = rawSection || "—";
+            const score =
+              typeof rawScore === "number"
+                ? rawScore
+                : parseFloat(rawScore ?? "0") || 0;
+
+            const answers = Array.isArray(attemptData.answers)
+              ? attemptData.answers
+              : [];
+
+            records.push({
+              course,
+              section,
+              name,
+              score,
+              parentId,
+              submissionId: submissionDoc.id,
+              attemptId: attemptIdLabel,
+              attemptData: { ...attemptData, answers }
+            });
+          }
         }
 
-        console.log("[DEBUG] total records gathered:", records.length);
+        console.log("[DEBUG] total records gathered across all parents:", records.length);
 
         if (!records.length) {
           setStatus("No data found.", false);
