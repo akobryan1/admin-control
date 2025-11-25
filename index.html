@@ -266,8 +266,10 @@
         if (attemptsSnap.empty) continue;
 
         const attemptDoc =
-          attemptsSnap.docs.find(x => x.id === "attempt1") ||
+          attemptsSnap.docs.find(d => d.id === "attempt1") ||
+          attemptsSnap.docs.find(d => d.id.toLowerCase().includes("attempt")) ||
           attemptsSnap.docs[0];
+
 
         const attempt = attemptDoc.data() || {};
         const submissionMeta = docSnap.data() || {};
