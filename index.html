@@ -5,11 +5,10 @@
   <title>Final Exam Results Viewer</title>
   <meta name="viewport" content="width=device-width, initial-scale=1" />
 
-  <!-- Kill cache during development -->
   <meta http-equiv="Cache-Control" content="no-cache, no-store, must-revalidate" />
   <meta http-equiv="Pragma" content="no-cache" />
   <meta http-equiv="Expires" content="0" />
-  <meta name="version" content="build-KZ-fullfix-final-1">
+  <meta name="version" content="build-KZ-collectionGroup-final-1">
 
   <style>
     :root {
@@ -21,20 +20,28 @@
       --danger: #f87171;
     }
 
+    * {
+      box-sizing: border-box;
+    }
+
     body {
       margin: 0;
-      font-family: system-ui, sans-serif;
-      background: #020617;
+      font-family: system-ui, -apple-system, BlinkMacSystemFont, "Segoe UI",
+        Roboto, Ubuntu, "Helvetica Neue", Arial, sans-serif;
+      background: radial-gradient(circle at top left, #0b1120 0, #020617 55%);
       color: var(--text);
     }
 
     .page {
       max-width: 1100px;
-      margin: auto;
-      padding: 24px;
+      margin: 0 auto;
+      padding: 24px 18px 40px;
     }
 
-    h1 { margin-bottom: 6px; }
+    h1 {
+      margin: 0 0 6px;
+      font-size: 1.6rem;
+    }
 
     .subtitle {
       color: var(--muted);
@@ -42,11 +49,20 @@
       font-size: 0.9rem;
     }
 
+    .subtitle code {
+      background: rgba(15, 23, 42, 0.9);
+      padding: 2px 6px;
+      border-radius: 6px;
+      border: 1px solid rgba(30, 64, 175, 0.4);
+      font-size: 0.8rem;
+    }
+
     .toolbar {
       display: flex;
       gap: 12px;
       align-items: center;
       margin-bottom: 16px;
+      flex-wrap: wrap;
     }
 
     .search-wrap {
@@ -60,8 +76,24 @@
       padding: 9px 32px;
       border-radius: 999px;
       border: 1px solid var(--border-soft);
-      background: #0f172a;
+      background: radial-gradient(circle at top left, rgba(148, 163, 184, 0.25) 0, rgba(15, 23, 42, 0.95) 55%);
       color: var(--text);
+      outline: none;
+      font-size: 0.9rem;
+    }
+
+    .search-wrap input::placeholder {
+      color: #64748b;
+    }
+
+    .search-wrap::before {
+      content: "🔍";
+      position: absolute;
+      left: 10px;
+      top: 50%;
+      transform: translateY(-50%);
+      font-size: 0.9rem;
+      opacity: 0.85;
     }
 
     .pill-info {
@@ -69,14 +101,17 @@
       padding: 4px 10px;
       border-radius: 999px;
       border: 1px solid #334155;
-      background: #0f172a;
+      background: rgba(15, 23, 42, 0.95);
+      white-space: nowrap;
     }
 
     .card {
       border-radius: 16px;
       padding: 16px;
-      background: #0f172a;
+      background: radial-gradient(circle at top left, rgba(56, 189, 248, 0.16), transparent 60%),
+        radial-gradient(circle at bottom right, rgba(37, 99, 235, 0.25), #020617 70%);
       border: 1px solid #1e293b;
+      box-shadow: 0 18px 45px rgba(15, 23, 42, 0.9);
     }
 
     .status-bar {
@@ -85,21 +120,32 @@
       margin-bottom: 10px;
       color: var(--muted);
       font-size: 0.85rem;
+      gap: 8px;
+      flex-wrap: wrap;
     }
 
     #statusText span.dot {
-      width: 7px; height: 7px;
+      width: 7px;
+      height: 7px;
       background: var(--accent);
       border-radius: 999px;
       display: inline-block;
       margin-right: 6px;
+      box-shadow: 0 0 6px rgba(45, 212, 191, 0.9);
     }
 
-    details.course-block, details.section-block {
+    #statusText.error span.dot {
+      background: var(--danger);
+      box-shadow: 0 0 6px rgba(248, 113, 113, 0.9);
+    }
+
+    details.course-block,
+    details.section-block {
       border: 1px solid #334155;
       border-radius: 10px;
       margin-bottom: 10px;
-      background: #0f172a;
+      background: rgba(15, 23, 42, 0.95);
+      overflow: hidden;
     }
 
     details > summary {
@@ -107,35 +153,121 @@
       padding: 10px 14px;
       display: flex;
       justify-content: space-between;
+      align-items: center;
+      list-style: none;
+      user-select: none;
+    }
+
+    details > summary::-webkit-details-marker {
+      display: none;
+    }
+
+    .summary-label {
+      font-size: 0.9rem;
+      font-weight: 600;
+    }
+
+    .summary-meta {
+      font-size: 0.8rem;
+      color: var(--muted);
+      margin-left: 6px;
+    }
+
+    .summary-chevron {
+      font-size: 0.8rem;
+      color: #64748b;
+      margin-left: 6px;
+      transition: transform 0.16s ease;
+    }
+
+    details[open] > summary .summary-chevron {
+      transform: rotate(90deg);
+      color: #e5e7eb;
     }
 
     .section-inner {
-      padding: 12px;
+      padding: 10px 12px 12px;
+      border-top: 1px solid #020617;
+      background: radial-gradient(circle at top left, rgba(148, 163, 184, 0.18), transparent 60%);
+    }
+
+    .section-caption {
+      font-size: 0.8rem;
+      color: var(--muted);
+      margin-bottom: 6px;
+    }
+
+    .table-wrap {
+      border-radius: 10px;
+      border: 1px solid #1f2937;
+      overflow-x: auto;
+      background: rgba(15, 23, 42, 0.95);
     }
 
     table {
       width: 100%;
       border-collapse: collapse;
       font-size: 0.88rem;
+      min-width: 520px;
     }
 
-    th, td {
+    thead {
+      background: linear-gradient(to right, rgba(15, 23, 42, 0.98), #020617);
+    }
+
+    th,
+    td {
       padding: 8px 10px;
       border-bottom: 1px solid #1e293b;
       white-space: nowrap;
+      text-align: left;
     }
 
-    tbody tr:nth-child(even) { background: #1e293b44; }
-    tbody tr:hover { background: #1e40af55; }
+    th {
+      font-weight: 500;
+      position: sticky;
+      top: 0;
+      z-index: 2;
+    }
+
+    tbody tr:nth-child(even) {
+      background: rgba(15, 23, 42, 0.82);
+    }
+
+    tbody tr:nth-child(odd) {
+      background: rgba(15, 23, 42, 0.62);
+    }
+
+    tbody tr:hover {
+      background: rgba(37, 99, 235, 0.4);
+    }
 
     .download-btn {
       padding: 4px 10px;
       font-size: 0.78rem;
       border: 1px solid var(--accent);
-      background: #0f172a;
+      background: #020617;
       color: #e0f2fe;
       border-radius: 999px;
       cursor: pointer;
+      white-space: nowrap;
+    }
+
+    .download-btn:hover {
+      background: rgba(56, 189, 248, 0.16);
+    }
+
+    .hidden {
+      display: none !important;
+    }
+
+    @media (max-width: 640px) {
+      h1 {
+        font-size: 1.3rem;
+      }
+      .card {
+        padding: 14px 12px;
+      }
     }
   </style>
 </head>
@@ -143,12 +275,14 @@
 <div class="page">
   <h1>Final Exam Submissions</h1>
   <div class="subtitle">
-    Loading from <code>finals-exam / KzRzubb5df1TV1gL2RuF / submissions</code>, grouped by Course & Section
+    Loading all <code>attempts/attempt1</code> under
+    <code>finals-exam / KzRzubb5df1TV1gL2RuF / submissions</code>,
+    grouped by <strong>Course</strong> &amp; <strong>Section</strong>.
   </div>
 
   <div class="toolbar">
     <div class="search-wrap">
-      <input id="searchInput" placeholder="Search by name, course, section…" />
+      <input id="searchInput" placeholder="Search by name, course, section…" autocomplete="off" />
     </div>
     <div class="pill-info">
       Loaded rows: <strong id="rowCount">0</strong>
@@ -157,22 +291,23 @@
 
   <div class="card">
     <div class="status-bar">
-      <div id="statusText"><span class="dot"></span>Connecting…</div>
+      <div id="statusText"><span class="dot"></span><span>Connecting…</span></div>
       <div id="lastUpdated">Last updated: —</div>
     </div>
-
     <div id="dataContainer" class="accordion"></div>
   </div>
 </div>
 
-<!-- jsPDF -->
 <script src="https://cdnjs.cloudflare.com/ajax/libs/jspdf/2.5.1/jspdf.umd.min.js"></script>
 
 <script type="module">
   import { initializeApp } from "https://www.gstatic.com/firebasejs/11.0.1/firebase-app.js";
-  import { getFirestore, collection, getDocs } from "https://www.gstatic.com/firebasejs/11.0.1/firebase-firestore.js";
-
-  console.log("[DEBUG] Script running…");
+  import {
+    getFirestore,
+    collectionGroup,
+    getDocs,
+    getDoc
+  } from "https://www.gstatic.com/firebasejs/11.0.1/firebase-firestore.js";
 
   const firebaseConfig = {
     apiKey: "AIzaSyB-idZOq8h9sVttNdzXE2t8FMoYI_snq7g",
@@ -186,18 +321,20 @@
   const app = initializeApp(firebaseConfig);
   const db = getFirestore(app);
 
-  console.log("[DEBUG] Firebase initialized");
+  const EXAM_PARENT_ID = "KzRzubb5df1TV1gL2RuF";
 
-  const COURSE_PARENT = "KzRzubb5df1TV1gL2RuF";
   const dataContainer = document.getElementById("dataContainer");
   const rowCountEl = document.getElementById("rowCount");
   const statusText = document.getElementById("statusText");
+  const lastUpdatedEl = document.getElementById("lastUpdated");
+  const searchInput = document.getElementById("searchInput");
 
   let allRows = [];
 
-  function setStatus(msg, error=false) {
-    statusText.innerHTML = `<span class="dot"></span>${msg}`;
-    if (error) statusText.style.color = "#f87171";
+  function setStatus(msg, error = false) {
+    statusText.classList.toggle("error", error);
+    statusText.innerHTML = `<span class="dot"></span><span>${msg}</span>`;
+    console.log("[STATUS]", msg);
   }
 
   function sanitize(str) {
@@ -206,20 +343,28 @@
 
   function normalizeCourse(raw) {
     if (!raw) return "Unknown Course";
-    const s = raw.toLowerCase().replace(/[^\w]/g, "");
-
-    if (s.includes("cropsci") || s.includes("cropscience"))
-      return "Crop Science Final Exam";
-
-    if (s.includes("agriculturalbiotechnology") ||
-        s.includes("biotech") ||
-        s.includes("biotechnology"))
+    const s = raw.toLowerCase();
+    if (s.includes("crop") && s.includes("sci")) return "CropSci Final Exam";
+    if (s.includes("biotech") || s.includes("biotechnology")) {
       return "Agricultural Biotechnology Final Exam";
+    }
+    return raw;
+  }
 
-    return raw.trim();
+  function formatTimestamp(d = new Date()) {
+    const y = d.getFullYear();
+    const m = String(d.getMonth() + 1).padStart(2, "0");
+    const day = String(d.getDate()).padStart(2, "0");
+    const h = String(d.getHours()).padStart(2, "0");
+    const min = String(d.getMinutes()).padStart(2, "0");
+    return `${y}-${m}-${day} ${h}:${min}`;
   }
 
   function buildPDF(rec) {
+    if (!window.jspdf || !window.jspdf.jsPDF) {
+      alert("PDF library not loaded.");
+      return;
+    }
     const { jsPDF } = window.jspdf;
     const doc = new jsPDF();
     let y = 15;
@@ -229,60 +374,82 @@
     y += 10;
 
     doc.setFontSize(11);
-    doc.text("Name: " + rec.name, 10, y); y+=6;
-    doc.text("Course: " + rec.course, 10, y); y+=6;
-    doc.text("Section: " + rec.section, 10, y); y+=6;
-    doc.text("Score: " + rec.score, 10, y); y+=10;
+    doc.text("Name: " + (rec.name || "—"), 10, y); y += 6;
+    doc.text("Course: " + (rec.course || "—"), 10, y); y += 6;
+    doc.text("Section: " + (rec.section || "—"), 10, y); y += 6;
+    doc.text("Score: " + (rec.score ?? "—"), 10, y); y += 10;
 
-    doc.text("Answers:", 10, y); y+=6;
+    doc.text("Answers:", 10, y); y += 6;
 
-    if (rec.attemptData.answers) {
-      rec.attemptData.answers.forEach((ans,i)=>{
-        if (y > 280) { doc.addPage(); y = 20; }
-        const line = `${i+1}. Chosen: ${ans.chosenAnswer||""} | Correct: ${ans.correctAnswer||""}`;
-        doc.text(line, 10, y);
-        y+=6;
-      });
-    }
+    const answers = Array.isArray(rec.attemptData.answers)
+      ? rec.attemptData.answers
+      : [];
 
-    doc.save(rec.name.replace(/[^a-z0-9]/gi,"_") + "_answers.pdf");
+    answers.forEach((ans, i) => {
+      if (y > 280) {
+        doc.addPage();
+        y = 20;
+      }
+      const chosen = ans.chosenAnswer ?? ans.chosen ?? "";
+      const correct = ans.correctAnswer ?? ans.correct ?? "";
+      const mark = ans.isCorrect === true ? "✔" : (ans.isCorrect === false ? "✘" : "");
+      const line = `${String(i + 1).padStart(2, "0")}. Chosen: ${chosen} | Correct: ${correct} ${mark}`;
+      doc.text(line, 10, y);
+      y += 6;
+    });
+
+    const safeName = (rec.name || "student").toString()
+      .replace(/[^a-z0-9]+/gi, "_")
+      .replace(/^_+|_+$/g, "")
+      .toLowerCase();
+
+    const safeCourse = (rec.course || "course").toString()
+      .replace(/[^a-z0-9]+/gi, "_")
+      .replace(/^_+|_+$/g, "")
+      .toLowerCase();
+
+    doc.save(`${safeName}_${safeCourse}_answers.pdf`);
   }
 
   async function loadData() {
     try {
-      setStatus("Loading…");
+      setStatus("Loading data from Firestore…");
 
-      const submissionsRef = collection(db, "finals-exam", COURSE_PARENT, "submissions");
-      const submissionsSnap = await getDocs(submissionsRef);
+      const attemptsQuery = collectionGroup(db, "attempts");
+      const attemptsSnap = await getDocs(attemptsQuery);
+      console.log("[DEBUG] total attempts docs in group:", attemptsSnap.size);
 
       const records = [];
 
-      for (const docSnap of submissionsSnap.docs) {
-        const attemptsRef = collection(
-          db,
-          "finals-exam",
-          COURSE_PARENT,
-          "submissions",
-          docSnap.id,
-          "attempts"
-        );
-        const attemptsSnap = await getDocs(attemptsRef);
+      for (const docSnap of attemptsSnap.docs) {
+        const path = docSnap.ref.path || "";
+        if (!path.startsWith(`finals-exam/${EXAM_PARENT_ID}/submissions/`)) {
+          continue;
+        }
 
-        if (attemptsSnap.empty) continue;
+        if (docSnap.id !== "attempt1") {
+          continue;
+        }
 
-        const attemptDoc =
-          attemptsSnap.docs.find(d => d.id === "attempt1") ||
-          attemptsSnap.docs.find(d => d.id.toLowerCase().includes("attempt")) ||
-          attemptsSnap.docs[0];
+        const attempt = docSnap.data() || {};
+        let submissionMeta = {};
 
+        try {
+          const submissionRef = docSnap.ref.parent.parent;
+          if (submissionRef) {
+            const submissionSnap = await getDoc(submissionRef);
+            if (submissionSnap.exists()) {
+              submissionMeta = submissionSnap.data() || {};
+            }
+          }
+        } catch (e) {
+          console.warn("[WARN] Failed to read submission meta for", path, e);
+        }
 
-        const attempt = attemptDoc.data() || {};
-        const submissionMeta = docSnap.data() || {};
-
-        // FIX: fallback to submission-level metadata
         const rawCourse =
           attempt.Course ??
           attempt.course ??
+          submissionMeta.Course ??
           submissionMeta.CourseUsed ??
           submissionMeta.courseUsed ??
           attempt.CourseName ??
@@ -290,16 +457,28 @@
 
         const name =
           attempt.Name ??
+          attempt.name ??
           submissionMeta.Name ??
           "Unknown";
 
         const section =
           attempt.Section ??
+          attempt.section ??
           submissionMeta.Section ??
+          submissionMeta.section ??
           submissionMeta.SectionUsed ??
           "—";
 
-        const score = parseFloat(attempt.Score ?? submissionMeta.Score ?? "0") || 0;
+        const scoreVal =
+          attempt.Score ??
+          attempt.score ??
+          submissionMeta.Score ??
+          submissionMeta.LatestScore;
+
+        const score =
+          typeof scoreVal === "number"
+            ? scoreVal
+            : parseFloat(scoreVal ?? "0") || 0;
 
         records.push({
           name,
@@ -310,11 +489,20 @@
         });
       }
 
-      console.log("[DEBUG] total collected:", records.length);
+      console.log("[DEBUG] total collected for this exam:", records.length);
+
+      if (!records.length) {
+        dataContainer.innerHTML =
+          '<div style="padding:8px 4px;font-size:0.9rem;color:#9ca3af;">No submissions found for this exam.</div>';
+        setStatus("No data found.");
+        rowCountEl.textContent = "0";
+        return;
+      }
+
       buildUI(records);
       setStatus("Data loaded.");
-    }
-    catch (err) {
+      lastUpdatedEl.textContent = "Last updated: " + formatTimestamp();
+    } catch (err) {
       console.error(err);
       setStatus("Error: " + err.message, true);
     }
@@ -324,8 +512,9 @@
     const map = {};
     for (const r of records) {
       if (!map[r.course]) map[r.course] = {};
-      if (!map[r.course][r.section]) map[r.course][r.section] = [];
-      map[r.course][r.section].push(r);
+      const sectionKey = r.section || "—";
+      if (!map[r.course][sectionKey]) map[r.course][sectionKey] = [];
+      map[r.course][sectionKey].push(r);
     }
     return map;
   }
@@ -335,32 +524,61 @@
     allRows = [];
     dataContainer.innerHTML = "";
 
-    const courseList = Object.keys(grouped).sort();
+    const courseList = Object.keys(grouped).sort((a, b) =>
+      a.localeCompare(b)
+    );
 
-    for (const course of courseList) {
+    courseList.forEach((course) => {
+      const sectionsForCourse = grouped[course];
+      const totalRecords = Object.values(sectionsForCourse)
+        .reduce((sum, arr) => sum + arr.length, 0);
+
       const courseBlock = document.createElement("details");
       courseBlock.className = "course-block";
 
       const summary = document.createElement("summary");
-      summary.innerHTML = `<div>${course}</div>`;
+      summary.innerHTML = `
+        <div>
+          <span class="summary-label">${course}</span>
+          <span class="summary-meta">Sections: ${
+            Object.keys(sectionsForCourse).length
+          } • Records: ${totalRecords}</span>
+        </div>
+        <span class="summary-chevron">▶</span>
+      `;
       courseBlock.appendChild(summary);
 
       const sectionAccordion = document.createElement("div");
 
-      const sections = Object.keys(grouped[course]).sort();
+      const sections = Object.keys(sectionsForCourse).sort((a, b) =>
+        a.localeCompare(b)
+      );
 
-      for (const section of sections) {
+      sections.forEach((sectionKey) => {
+        const rows = sectionsForCourse[sectionKey];
+
         const sectionBlock = document.createElement("details");
         sectionBlock.className = "section-block";
 
         const ssum = document.createElement("summary");
-        ssum.innerHTML = `<div>Section ${section}</div>`;
+        const label = sectionKey === "—" ? "No Section" : sectionKey;
+        ssum.innerHTML = `
+          <div>
+            <span class="summary-label">Section ${label}</span>
+            <span class="summary-meta">Records: ${rows.length}</span>
+          </div>
+          <span class="summary-chevron">▶</span>
+        `;
         sectionBlock.appendChild(ssum);
 
         const inner = document.createElement("div");
         inner.className = "section-inner";
+        inner.innerHTML =
+          '<div class="section-caption">Use the search bar above to filter by name, course, or section.</div>';
 
-        // Table
+        const tableWrap = document.createElement("div");
+        tableWrap.className = "table-wrap";
+
         const table = document.createElement("table");
         table.innerHTML = `
           <thead>
@@ -373,9 +591,10 @@
             </tr>
           </thead>
         `;
+
         const tbody = document.createElement("tbody");
 
-        grouped[course][section].forEach(rec => {
+        rows.forEach((rec) => {
           const tr = document.createElement("tr");
           tr.dataset.name = sanitize(rec.name);
           tr.dataset.course = sanitize(rec.course);
@@ -385,42 +604,54 @@
             <td>${rec.name}</td>
             <td>${rec.course}</td>
             <td>${rec.section}</td>
-            <td>${rec.score}</td>
+            <td>${isNaN(rec.score) ? "-" : rec.score}</td>
             <td><button class="download-btn">Download PDF</button></td>
           `;
 
-          tr.querySelector("button").onclick = () => buildPDF(rec);
+          const btn = tr.querySelector("button");
+          btn.addEventListener("click", () => buildPDF(rec));
 
           tbody.appendChild(tr);
           allRows.push(tr);
         });
 
         table.appendChild(tbody);
-        inner.appendChild(table);
+        tableWrap.appendChild(table);
+        inner.appendChild(tableWrap);
         sectionBlock.appendChild(inner);
         sectionAccordion.appendChild(sectionBlock);
-      }
+      });
 
       courseBlock.appendChild(sectionAccordion);
       dataContainer.appendChild(courseBlock);
-    }
+    });
 
-    rowCountEl.textContent = allRows.length;
+    rowCountEl.textContent = allRows.length.toString();
   }
 
-  document.getElementById("searchInput").addEventListener("input", (e)=>{
-    const q = sanitize(e.target.value);
-    allRows.forEach(tr => {
+  function applySearchFilter(query) {
+    const q = sanitize(query);
+    const hasQuery = q.length > 0;
+
+    allRows.forEach((tr) => {
+      if (!hasQuery) {
+        tr.classList.remove("hidden");
+        return;
+      }
       const hay =
         tr.dataset.name + " " +
         tr.dataset.course + " " +
         tr.dataset.section;
       tr.classList.toggle("hidden", !hay.includes(q));
     });
+  }
+
+  searchInput.addEventListener("input", (e) => {
+    applySearchFilter(e.target.value || "");
   });
 
+  console.log("[DEBUG] Script running, loading data via collectionGroup…");
   loadData();
 </script>
-
 </body>
 </html>
