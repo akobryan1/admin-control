@@ -423,8 +423,6 @@
 
       for (const docSnap of attemptsSnap.docs) {
         const path = docSnap.ref.path || "";
-        if (!path.startsWith(`finals-exam/${EXAM_PARENT_ID}/submissions/`)) {
-          continue;
         }
 
         if (docSnap.id !== "attempt1") {
