@@ -10,7 +10,7 @@
   <meta http-equiv="Pragma" content="no-cache" />
   <meta http-equiv="Expires" content="0" />
 
-  <!-- jsPDF -->
+  <!-- jsPDF for PDF download -->
   <script src="https://cdnjs.cloudflare.com/ajax/libs/jspdf/2.5.1/jspdf.umd.min.js"></script>
 
   <style>
@@ -23,227 +23,445 @@
       --danger: #f87171;
       --radius-lg: 16px;
     }
+
+    * { box-sizing: border-box; }
+
     body {
-      margin:0;
-      font-family: system-ui, sans-serif;
-      background:#0b1120;
-      color:var(--text);
+      margin: 0;
+      font-family: system-ui, -apple-system, BlinkMacSystemFont, "Segoe UI", sans-serif;
+      background: radial-gradient(circle at top left, #0b1120 0, #020617 50%);
+      color: var(--text);
+      min-height: 100vh;
     }
-    .page { max-width:1100px; margin:0 auto; padding:20px; }
-    h1 { margin:0 0 10px; }
 
-    .toolbar { display:flex; gap:12px; margin:20px 0; }
-    .search-wrap { flex:1; position:relative; }
+    .page {
+      max-width: 1100px;
+      margin: 0 auto;
+      padding: 20px 16px 40px;
+    }
+
+    h1 {
+      margin: 0 0 6px;
+      font-size: 1.6rem;
+      letter-spacing: 0.03em;
+    }
+
+    .subtitle {
+      font-size: 0.9rem;
+      color: var(--muted);
+    }
+
+    .toolbar {
+      display: flex;
+      flex-wrap: wrap;
+      gap: 12px;
+      align-items: center;
+      margin: 18px 0 14px;
+    }
+
+    .search-wrap {
+      position: relative;
+      flex: 1 1 220px;
+      max-width: 420px;
+    }
+
     .search-wrap input {
-      width:100%; padding:9px 32px; border-radius:999px;
-      border:1px solid var(--border-soft);
-      background:#0f172a; color:white;
-    }
-    .card {
-      padding:15px;
-      background:#0f172a;
-      border-radius:var(--radius-lg);
-      border:1px solid #1e293b;
+      width: 100%;
+      padding: 9px 32px;
+      border-radius: 999px;
+      border: 1px solid var(--border-soft);
+      background: #020617;
+      color: var(--text);
+      outline: none;
+      font-size: 0.9rem;
     }
 
-    .status-bar { font-size:0.85rem; display:flex; justify-content:space-between; color:var(--muted); }
+    .search-wrap input::placeholder {
+      color: #64748b;
+    }
+
+    .pill-info {
+      font-size: 0.8rem;
+      padding: 3px 10px;
+      border-radius: 999px;
+      border: 1px solid rgba(148, 163, 184, 0.45);
+      background: rgba(15, 23, 42, 0.85);
+      color: #cbd5f5;
+    }
+
+    .pill-info strong {
+      color: var(--accent);
+    }
+
+    .card {
+      border-radius: var(--radius-lg);
+      padding: 16px 14px 10px;
+      background: #020617;
+      border: 1px solid rgba(15, 23, 42, 0.9);
+      box-shadow: 0 20px 45px rgba(15, 23, 42, 0.9);
+    }
+
+    .status-bar {
+      display: flex;
+      justify-content: space-between;
+      gap: 8px;
+      align-items: center;
+      margin-bottom: 8px;
+      font-size: 0.8rem;
+      color: var(--muted);
+    }
+
+    .table-wrap {
+      margin-top: 6px;
+      border-radius: 10px;
+      border: 1px solid #111827;
+      overflow-x: auto;
+      background: rgba(15, 23, 42, 0.9);
+    }
 
     table {
-      width:100%; border-collapse:collapse; margin-top:10px;
+      width: 100%;
+      border-collapse: collapse;
+      font-size: 0.86rem;
+      min-width: 560px;
     }
+
+    thead {
+      background: #020617;
+    }
+
     th, td {
-      padding:8px 10px; border-bottom:1px solid #1e293b;
-      white-space:nowrap;
+      padding: 8px 10px;
+      text-align: left;
+      border-bottom: 1px solid #111827;
+      white-space: nowrap;
     }
-    th { background:#1e293b; position:sticky; top:0; }
-    tr:nth-child(even){ background:#0d1b2a; }
-    tr:nth-child(odd){ background:#102136; }
+
+    th {
+      font-weight: 500;
+      color: #e5e7eb;
+      position: sticky;
+      top: 0;
+      background: #020617;
+      z-index: 2;
+    }
+
+    tbody tr:nth-child(even) {
+      background: rgba(15, 23, 42, 0.8);
+    }
+
+    tbody tr:nth-child(odd) {
+      background: rgba(15, 23, 42, 0.55);
+    }
+
+    tbody tr:hover {
+      background: rgba(30, 64, 175, 0.45);
+    }
 
     button.pdf-btn {
-      background:#22d3ee;
-      border:none;
-      padding:5px 10px;
-      border-radius:6px;
-      cursor:pointer;
-      color:black;
-      font-weight:600;
+      background: var(--accent);
+      border: none;
+      padding: 4px 10px;
+      border-radius: 999px;
+      font-size: 0.8rem;
+      font-weight: 600;
+      cursor: pointer;
+      color: #020617;
+    }
+
+    button.pdf-btn:hover {
+      filter: brightness(1.05);
+    }
+
+    @media (max-width: 640px) {
+      h1 {
+        font-size: 1.35rem;
+      }
+      .card {
+        padding: 14px 10px 10px;
+      }
     }
   </style>
 </head>
-
 <body>
-<div class="page">
+  <div class="page">
+    <header>
+      <h1>Final Exam Submissions</h1>
+      <div class="subtitle">
+        Data from <code>finals-exam / [Any Exam] / submissions / [Student]</code> (all courses, sorted by Course)
+      </div>
+    </header>
 
-  <h1>Final Exam Submissions — ANSCI</h1>
+    <div class="toolbar">
+      <div class="search-wrap">
+        <input
+          id="searchInput"
+          type="text"
+          placeholder="Search by name, course, section…"
+          autocomplete="off"
+        />
+      </div>
 
-  <div class="toolbar">
-    <div class="search-wrap">
-      <input id="searchInput" type="text" placeholder="Search name, course, section…" />
+      <div class="pill-info">
+        Loaded rows: <strong id="rowCount">0</strong>
+      </div>
     </div>
-    <div style="font-size:0.9rem;">
-      Loaded rows: <strong id="rowCount">0</strong>
+
+    <div class="card">
+      <div class="status-bar">
+        <div id="statusText">Connecting to Firestore…</div>
+        <div id="lastUpdated">Last updated: —</div>
+      </div>
+
+      <div class="table-wrap">
+        <table>
+          <thead>
+            <tr>
+              <th>Name</th>
+              <th>Course</th>
+              <th>Section</th>
+              <th>Score</th>
+              <th>Download</th>
+            </tr>
+          </thead>
+          <tbody id="resultsBody"></tbody>
+        </table>
+      </div>
     </div>
   </div>
 
-  <div class="card">
-    <div class="status-bar">
-      <div id="statusText">Loading Firestore…</div>
-      <div id="lastUpdated">Last updated: —</div>
-    </div>
+  <script type="module">
+    import { initializeApp } from "https://www.gstatic.com/firebasejs/11.0.1/firebase-app.js";
+    import {
+      getFirestore,
+      collection,
+      getDocs
+    } from "https://www.gstatic.com/firebasejs/11.0.1/firebase-firestore.js";
 
-    <div class="table-wrap">
-      <table id="resultsTable">
-        <thead>
-          <tr>
-            <th>Name</th>
-            <th>Course</th>
-            <th>Section</th>
-            <th>Score</th>
-            <th>Download</th>
-          </tr>
-        </thead>
-        <tbody id="resultsBody"></tbody>
-      </table>
-    </div>
-  </div>
-</div>
+    const firebaseConfig = {
+      apiKey: "AIzaSyB-idZOq8h9sVttNdzXE2t8FMoYI_snq7g",
+      authDomain: "kuya-quiz-100.firebaseapp.com",
+      projectId: "kuya-quiz-100",
+      storageBucket: "kuya-quiz-100.firebasestorage.app",
+      messagingSenderId: "74623975270",
+      appId: "1:74623975270:web:dec2b21dbee017292952a7"
+    };
 
-<!-- Firebase -->
-<script type="module">
-  import { initializeApp } from "https://www.gstatic.com/firebasejs/11.0.1/firebase-app.js";
-  import {
-    getFirestore,
-    collection,
-    doc,
-    getDoc,
-    getDocs
-  } from "https://www.gstatic.com/firebasejs/11.0.1/firebase-firestore.js";
+    const app = initializeApp(firebaseConfig);
+    const db = getFirestore(app);
 
-  const firebaseConfig = {
-    apiKey: "AIzaSyB-idZOq8h9sVttNdzXE2t8FMoYI_snq7g",
-    authDomain: "kuya-quiz-100.firebaseapp.com",
-    projectId: "kuya-quiz-100",
-    storageBucket: "kuya-quiz-100.firebasestorage.app",
-    messagingSenderId: "74623975270",
-    appId: "1:74623975270:web:dec2b21dbee017292952a7"
-  };
+    const statusText = document.getElementById("statusText");
+    const lastUpdatedEl = document.getElementById("lastUpdated");
+    const rowCountEl = document.getElementById("rowCount");
+    const resultsBody = document.getElementById("resultsBody");
+    const searchInput = document.getElementById("searchInput");
 
-  const app = initializeApp(firebaseConfig);
-  const db = getFirestore(app);
+    let ALL_RECORDS = []; // { key, courseDocId, submissionId, name, course, section, score, fullData }
 
-  const ANSCI_DOC = "ANSCI2025Final";
+    function setStatus(message, isError = false) {
+      statusText.textContent = message;
+      statusText.style.color = isError ? "var(--danger)" : "var(--muted)";
+    }
 
-  const resultsBody = document.getElementById("resultsBody");
-  const rowCountEl = document.getElementById("rowCount");
-  const statusText = document.getElementById("statusText");
-  const lastUpdated = document.getElementById("lastUpdated");
-  const searchInput = document.getElementById("searchInput");
+    function formatNow() {
+      const d = new Date();
+      const pad = (n) => String(n).padStart(2, "0");
+      return (
+        d.getFullYear() + "-" +
+        pad(d.getMonth() + 1) + "-" +
+        pad(d.getDate()) + " " +
+        pad(d.getHours()) + ":" +
+        pad(d.getMinutes())
+      );
+    }
 
-  let ALL_ROWS = [];
+    async function loadData() {
+      try {
+        setStatus("Loading data from Firestore…");
+        const records = [];
 
-  function setStatus(msg){ statusText.textContent = msg; }
+        // Step 1: get all exams under finals-exam/*
+        const finalsColRef = collection(db, "finals-exam");
+        const finalsSnap = await getDocs(finalsColRef);
 
-  async function loadData() {
-    setStatus("Loading...");
+        for (const examDoc of finalsSnap.docs) {
+          const courseDocId = examDoc.id;
 
-    const subsRef = collection(db, "finals-exam", ANSCI_DOC, "submissions");
-    const snap = await getDocs(subsRef);
+          // Step 2: for each exam, load its submissions
+          const subsRef = collection(db, "finals-exam", courseDocId, "submissions");
+          const subsSnap = await getDocs(subsRef);
 
-    const records = [];
+          for (const submissionDoc of subsSnap.docs) {
+            const data = submissionDoc.data();
 
-    for (const d of snap.docs) {
-      const data = d.data();
-      records.push({
-        id: d.id,
-        name: data.Name ?? "Unknown",
-        course: data.Course ?? "Unknown",
-        section: data.Section ?? "—",
-        score: data.Score ?? 0
+            const name = data.Name ?? data.name ?? "Unknown";
+            const course = data.Course ?? data.course ?? courseDocId;
+            const section = data.Section ?? data.section ?? "—";
+
+            let score = data.Score;
+            if (typeof score !== "number") {
+              score = parseFloat(score ?? "0");
+              if (isNaN(score)) score = 0;
+            }
+
+            const key = courseDocId + "::" + submissionDoc.id;
+
+            records.push({
+              key,
+              courseDocId,
+              submissionId: submissionDoc.id,
+              name,
+              course,
+              section,
+              score,
+              fullData: data
+            });
+          }
+        }
+
+        // Sort by Course, then Section, then Name
+        records.sort((a, b) => {
+          const c1 = a.course.toLowerCase();
+          const c2 = b.course.toLowerCase();
+          if (c1 < c2) return -1;
+          if (c1 > c2) return 1;
+
+          const s1 = a.section.toLowerCase();
+          const s2 = b.section.toLowerCase();
+          if (s1 < s2) return -1;
+          if (s1 > s2) return 1;
+
+          const n1 = a.name.toLowerCase();
+          const n2 = b.name.toLowerCase();
+          if (n1 < n2) return -1;
+          if (n1 > n2) return 1;
+          return 0;
+        });
+
+        ALL_RECORDS = records;
+        renderTable(records);
+
+        setStatus("Data loaded.");
+        lastUpdatedEl.textContent = "Last updated: " + formatNow();
+      } catch (err) {
+        console.error(err);
+        setStatus("Error loading data: " + err.message, true);
+      }
+    }
+
+    function renderTable(records) {
+      resultsBody.innerHTML = "";
+      rowCountEl.textContent = String(records.length);
+
+      records.forEach((r) => {
+        const tr = document.createElement("tr");
+        tr.dataset.key = r.key;
+        tr.dataset.name = r.name.toLowerCase();
+        tr.dataset.course = r.course.toLowerCase();
+        tr.dataset.section = r.section.toLowerCase();
+
+        const btnHtml = `<button class="pdf-btn" data-key="${r.key}">PDF</button>`;
+
+        tr.innerHTML = `
+          <td>${r.name}</td>
+          <td>${r.course}</td>
+          <td>${r.section}</td>
+          <td>${r.score}</td>
+          <td>${btnHtml}</td>
+        `;
+
+        resultsBody.appendChild(tr);
       });
     }
 
-    ALL_ROWS = records;
-    renderTable(records);
-    setStatus("Loaded.");
-    lastUpdated.textContent = "Last updated: " + new Date().toLocaleString();
-  }
+    function applySearch() {
+      const q = searchInput.value.trim().toLowerCase();
+      if (!q) {
+        renderTable(ALL_RECORDS);
+        return;
+      }
 
-  function renderTable(rows) {
-    resultsBody.innerHTML = "";
-    rowCountEl.textContent = rows.length;
+      const filtered = ALL_RECORDS.filter((r) => {
+        const haystack =
+          r.name.toLowerCase() +
+          " " +
+          r.course.toLowerCase() +
+          " " +
+          r.section.toLowerCase();
+        return haystack.includes(q);
+      });
 
-    rows.forEach(r => {
-      const tr = document.createElement("tr");
-      tr.dataset.name = r.name.toLowerCase();
-      tr.dataset.course = r.course.toLowerCase();
-      tr.dataset.section = r.section.toLowerCase();
-
-      tr.innerHTML = `
-        <td>${r.name}</td>
-        <td>${r.course}</td>
-        <td>${r.section}</td>
-        <td>${r.score}</td>
-        <td><button class="pdf-btn" data-id="${r.id}">PDF</button></td>
-      `;
-      resultsBody.appendChild(tr);
-    });
-  }
-
-  searchInput.addEventListener("input", () => {
-    const q = searchInput.value.toLowerCase();
-    const filtered = ALL_ROWS.filter(r =>
-      r.name.toLowerCase().includes(q) ||
-      r.course.toLowerCase().includes(q) ||
-      r.section.toLowerCase().includes(q)
-    );
-    renderTable(filtered);
-  });
-
-  // PDF generation
-  document.body.addEventListener("click", async (e) => {
-    if (!e.target.classList.contains("pdf-btn")) return;
-
-    const id = e.target.dataset.id;
-
-    const ref = doc(db, "finals-exam", ANSCI_DOC, "submissions", id);
-    const snap = await getDoc(ref);
-    const data = snap.data();
-
-    const { jsPDF } = window.jspdf;
-    const pdf = new jsPDF();
-
-    pdf.setFontSize(14);
-    pdf.text("Student Answer Sheet", 14, 15);
-
-    pdf.setFontSize(11);
-    let y = 28;
-
-    function add(text){
-      pdf.text(text, 14, y);
-      y += 7;
+      renderTable(filtered);
     }
 
-    add("Name: " + (data.Name ?? "Unknown"));
-    add("Course: " + (data.Course ?? "Unknown"));
-    add("Section: " + (data.Section ?? "—"));
-    add("Score: " + (data.Score ?? "0"));
-    y += 5;
-    add("Answers:");
+    searchInput.addEventListener("input", applySearch);
 
-    const answers = data.answers ?? [];
+    // PDF download handler
+    document.body.addEventListener("click", (e) => {
+      const btn = e.target.closest(".pdf-btn");
+      if (!btn) return;
 
-    answers.forEach((item, i) => {
-      add(`Q${i+1}: chosen=${item.chosenAnswer}, correct=${item.correctAnswer}, isCorrect=${item.isCorrect}`);
-      Object.entries(item.options).forEach(([key, val]) => {
-        add(`    ${key}: ${val}`);
+      const key = btn.dataset.key;
+      const record = ALL_RECORDS.find((r) => r.key === key);
+      if (!record) return;
+
+      const data = record.fullData;
+      const { jsPDF } = window.jspdf;
+      const doc = new jsPDF();
+
+      let y = 15;
+      doc.setFontSize(14);
+      doc.text("Student Answer Sheet", 14, y);
+      y += 10;
+
+      doc.setFontSize(11);
+      const addLine = (text) => {
+        doc.text(String(text), 14, y);
+        y += 6;
+        if (y > 280) {
+          doc.addPage();
+          y = 15;
+        }
+      };
+
+      addLine("Name: " + (data.Name ?? "Unknown"));
+      addLine("Course: " + (data.Course ?? record.course));
+      addLine("Section: " + (data.Section ?? record.section));
+      addLine("Score: " + (data.Score ?? record.score));
+      y += 4;
+      addLine("Answers:");
+
+      const answers = data.answers ?? [];
+      answers.forEach((item, idx) => {
+        const qNum = idx + 1;
+        addLine(
+          "Q" +
+            qNum +
+            ": chosen=" +
+            (item.chosenAnswer ?? "") +
+            ", correct=" +
+            (item.correctAnswer ?? "") +
+            ", isCorrect=" +
+            (item.isCorrect === true ? "true" : "false")
+        );
+        if (item.options) {
+          const entries = Object.entries(item.options);
+          entries.forEach(([keyOpt, valOpt]) => {
+            addLine("    " + keyOpt + ": " + String(valOpt));
+          });
+        }
+        y += 2;
       });
-      y += 2;
+
+      const safeName = (data.Name ?? "student")
+        .replace(/\s+/g, "_")
+        .replace(/[^\w\-]+/g, "");
+      const filename = safeName + "_ANS_" + record.submissionId + ".pdf";
+
+      doc.save(filename);
     });
 
-    pdf.save(`${data.Name}-ANS-${id}.pdf`);
-  });
-
-  loadData();
-</script>
+    loadData();
+  </script>
 </body>
 </html>
