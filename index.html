@@ -9,7 +9,7 @@
   <meta http-equiv="Cache-Control" content="no-cache, no-store, must-revalidate" />
   <meta http-equiv="Pragma" content="no-cache" />
   <meta http-equiv="Expires" content="0" />
-  <meta name="version" content="build-kz-ansheets-allcourses-1">
+  <meta name="version" content="build-kz-ansci-flatcourse-1">
 
   <style>
     :root {
@@ -164,82 +164,30 @@
       box-shadow: 0 0 7px rgba(248, 113, 113, 0.9);
     }
 
-    .accordion {
-      margin-top: 6px;
-      display: flex;
-      flex-direction: column;
-      gap: 10px;
-    }
-
-    details.course-block,
-    details.section-block {
+    .course-block {
+      margin-top: 14px;
       border-radius: var(--radius-md);
       border: 1px solid rgba(148, 163, 184, 0.35);
-      background: rgba(15, 23, 42, 0.8);
-      padding: 0;
-      overflow: hidden;
+      background: rgba(15, 23, 42, 0.9);
+      padding: 10px 10px 12px;
     }
 
-    details.course-block[open],
-    details.section-block[open] {
-      border-color: rgba(56, 189, 248, 0.7);
-      box-shadow: 0 0 0 1px rgba(56, 189, 248, 0.25);
-    }
-
-    details > summary {
-      list-style: none;
-      padding: 9px 12px;
-      cursor: pointer;
+    .course-header {
       display: flex;
-      align-items: center;
       justify-content: space-between;
-      gap: 8px;
-      user-select: none;
-    }
-
-    details > summary::-webkit-details-marker {
-      display: none;
-    }
-
-    .summary-main {
-      display: flex;
       align-items: baseline;
-      gap: 6px;
-      font-size: 0.92rem;
+      margin-bottom: 8px;
+      gap: 8px;
     }
 
-    .summary-main .label {
+    .course-title {
+      font-size: 1rem;
       font-weight: 600;
-      letter-spacing: 0.02em;
     }
 
-    .summary-main .meta {
+    .course-meta {
       font-size: 0.8rem;
       color: var(--muted);
-    }
-
-    .summary-chevron {
-      font-size: 0.85rem;
-      color: #64748b;
-      margin-left: 4px;
-      transition: transform 0.18s ease;
-    }
-
-    details[open] .summary-chevron {
-      transform: rotate(90deg);
-      color: #e2e8f0;
-    }
-
-    .section-inner {
-      padding: 4px 10px 10px;
-      border-top: 1px solid rgba(15, 23, 42, 0.9);
-      background: radial-gradient(circle at top left, rgba(148, 163, 184, 0.16), transparent 60%);
-    }
-
-    .section-inner .section-caption {
-      font-size: 0.8rem;
-      color: var(--muted);
-      margin: 2px 0 6px;
     }
 
     .table-wrap {
@@ -331,12 +279,11 @@
     <header>
       <h1>Final Exam Submissions</h1>
       <div class="subtitle">
-        Viewer for:
-        <ul style="margin:4px 0 0 16px;padding:0;font-size:0.85rem;color:#9ca3af;list-style:disc;">
-          <li><code>finals-exam / KzRzubb5df1TV1gL2RuF / submissions / [student] / attempts / attempt1</code> (CropSci &amp; AgBiotech)</li>
-          <li><code>finals-exam / ANSCI2025Final / submissions / [student]</code> (Animal Science)</li>
-        </ul>
-        Grouped by <strong>Course</strong> &amp; <strong>Section</strong>.
+        Reads from:
+        <br />
+        <code>finals-exam / KzRzubb5df1TV1gL2RuF / submissions / [student] / attempts / attempt1</code><br />
+        <code>finals-exam / ANSCI2025Final / submissions / [student]</code><br />
+        Grouped by <strong>Course</strong> (one table per course)
       </div>
     </header>
 
@@ -363,7 +310,7 @@
         <div id="lastUpdated">Last updated: —</div>
       </div>
 
-      <div id="dataContainer" class="accordion"></div>
+      <div id="dataContainer"></div>
     </div>
   </div>
 
@@ -395,18 +342,16 @@
 
     console.log("[DEBUG] Firebase app initialized:", app.name);
 
-    // Parents
-    const KZ_PARENT_DOC_ID = "KzRzubb5df1TV1gL2RuF";  // CropSci + Biotech
-    const ANSCI_DOC_ID     = "ANSCI2025Final";        // Animal Science
-
+    const KZ_DOC_ID = "KzRzubb5df1TV1gL2RuF";   // CropSci + Biotech parent
+    const ANSCI_DOC_ID = "ANSCI2025Final";        // Animal Science parent
     const submissionsCollectionName = "submissions";
-    const attemptsCollectionName    = "attempts";
+    const attemptsCollectionName = "attempts";
 
-    const dataContainer   = document.getElementById("dataContainer");
-    const statusText      = document.getElementById("statusText");
-    const rowCountEl      = document.getElementById("rowCount");
-    const lastUpdatedEl   = document.getElementById("lastUpdated");
-    const searchInput     = document.getElementById("searchInput");
+    const dataContainer = document.getElementById("dataContainer");
+    const statusText = document.getElementById("statusText");
+    const rowCountEl = document.getElementById("rowCount");
+    const lastUpdatedEl = document.getElementById("lastUpdated");
+    const searchInput = document.getElementById("searchInput");
 
     let allRows = [];
 
@@ -444,15 +389,20 @@
       const s = (rawCourse || "").toLowerCase().trim();
       if (!s) return "Unknown Course";
 
+      // Crop Science
       if (s.includes("crop") && s.includes("sci")) {
         return "Crop Science Final Exam";
       }
 
-      if (s.includes("agricultural") &&
-          (s.includes("biotech") || s.includes("biotechnology"))) {
+      // Agricultural Biotechnology
+      if (
+        s.includes("agricultural") &&
+        (s.includes("biotech") || s.includes("biotechnology"))
+      ) {
         return "Agricultural Biotechnology Final Exam";
       }
 
+      // Animal Science
       if (s.includes("animal") && s.includes("science")) {
         return "Animal Science Final Exam";
       }
@@ -469,11 +419,11 @@
       const doc = new jsPDF();
 
       const course = record.course || "";
-      const name   = record.name   || "";
-      const section= record.section|| "—";
-      const score  = record.score ?? "";
-      const attempt= record.attemptData || {};
-      const answers= Array.isArray(attempt.answers) ? attempt.answers : [];
+      const name = record.name || "";
+      const section = record.section || "—";
+      const score = record.score ?? "";
+      const attempt = record.attemptData || {};
+      const answers = Array.isArray(attempt.answers) ? attempt.answers : [];
 
       let y = 15;
       doc.setFontSize(14);
@@ -481,10 +431,10 @@
       y += 8;
 
       doc.setFontSize(11);
-      doc.text("Name: " + name,    10, y); y += 6;
-      doc.text("Course: " + course,10, y); y += 6;
-      doc.text("Section: " + section,10, y); y += 6;
-      doc.text("Score: " + score,  10, y); y += 10;
+      doc.text("Name: " + name, 10, y); y += 6;
+      doc.text("Course: " + course, 10, y); y += 6;
+      doc.text("Section: " + section, 10, y); y += 6;
+      doc.text("Score: " + score, 10, y); y += 10;
 
       doc.setFontSize(11);
       doc.text("Answers:", 10, y); y += 6;
@@ -494,10 +444,9 @@
           doc.addPage();
           y = 20;
         }
-        const chosen   = ans.chosenAnswer  ?? ans.chosen  ?? "";
-        const correct  = ans.correctAnswer ?? ans.correct ?? "";
-        const isCorrect= ans.isCorrect === true ? "✔" :
-                         ans.isCorrect === false ? "✘" : "";
+        const chosen = ans.chosenAnswer ?? ans.chosen ?? "";
+        const correct = ans.correctAnswer ?? ans.correct ?? "";
+        const isCorrect = ans.isCorrect === true ? "✔" : (ans.isCorrect === false ? "✘" : "");
         const line =
           String(idx + 1).padStart(2, "0") +
           ". Chosen: " + chosen +
@@ -507,17 +456,20 @@
         y += 6;
       });
 
-      const safeName   = sanitizeFileName(name);
+      const safeName = sanitizeFileName(name);
       const safeCourse = sanitizeFileName(course);
-      const fileName   = safeName + "_" + safeCourse + "_answers.pdf";
+      const fileName = safeName + "_" + safeCourse + "_answers.pdf";
       doc.save(fileName);
     }
 
-    async function loadFromKZ(records) {
+    async function loadKZRecords() {
+      // CropSci + Biotech (KzRzubb5df1TV1gL2RuF)
+      const records = [];
+
       const submissionsRef = collection(
         db,
         "finals-exam",
-        KZ_PARENT_DOC_ID,
+        KZ_DOC_ID,
         submissionsCollectionName
       );
       console.log("[DEBUG] KZ submissionsRef path:", submissionsRef.path);
@@ -526,12 +478,10 @@
       console.log("[DEBUG] KZ submissions doc count:", submissionsSnap.size);
 
       for (const submissionDoc of submissionsSnap.docs) {
-        const submissionMeta = submissionDoc.data() || {};
-
         const attemptsRef = collection(
           db,
           "finals-exam",
-          KZ_PARENT_DOC_ID,
+          KZ_DOC_ID,
           submissionsCollectionName,
           submissionDoc.id,
           attemptsCollectionName
@@ -548,64 +498,46 @@
         if (attemptsSnap.empty) continue;
 
         const attemptDoc =
-          attemptsSnap.docs.find(d => d.id === "attempt1") ||
-          attemptsSnap.docs.find(d => d.id.toLowerCase().includes("attempt")) ||
+          attemptsSnap.docs.find((d) => d.id === "attempt1") ||
+          attemptsSnap.docs.find((d) => d.id.toLowerCase().includes("attempt")) ||
           attemptsSnap.docs[0];
 
         const attemptData = attemptDoc.data() || {};
 
-        const rawName =
-          attemptData.Name ??
-          attemptData.name ??
-          submissionMeta.Name ??
-          submissionMeta.name ??
-          "Unknown";
-
+        const rawName = attemptData.Name ?? attemptData.name ?? "Unknown";
         const rawCourse =
           attemptData.Course ??
           attemptData.course ??
-          submissionMeta.Course ??
-          submissionMeta.course ??
-          submissionMeta.CourseUsed ??
-          submissionMeta.courseUsed ??
           attemptData.CourseName ??
           "Unknown Course";
-
         const rawSection =
-          attemptData.Section ??
-          attemptData.section ??
-          submissionMeta.Section ??
-          submissionMeta.section ??
-          submissionMeta.SectionUsed ??
-          submissionMeta.sectionUsed ??
-          "—";
-
-        const rawScore =
-          attemptData.Score ??
-          submissionMeta.Score ??
-          submissionMeta.score ??
-          "0";
+          attemptData.Section ?? attemptData.section ?? "—";
+        const rawScore = attemptData.Score;
 
         const course = normalizeCourseName(rawCourse);
-        const name   = rawName;
-        const section= rawSection || "—";
-        const score  = typeof rawScore === "number"
-          ? rawScore
-          : parseFloat(rawScore || "0") || 0;
+        const name = rawName;
+        const section = rawSection || "—";
+        const score =
+          typeof rawScore === "number"
+            ? rawScore
+            : parseFloat(rawScore ?? "0") || 0;
 
         records.push({
           course,
           section,
           name,
           score,
-          submissionId: submissionDoc.id,
-          attemptId: attemptDoc.id,
-          attemptData
+          attemptData,
+          source: "KZ"
         });
       }
+
+      return records;
     }
 
-    async function loadFromANSCI(records) {
+    async function loadANSCIRecords() {
+      const records = [];
+
       const ansciRef = collection(
         db,
         "finals-exam",
@@ -617,60 +549,50 @@
       const ansciSnap = await getDocs(ansciRef);
       console.log("[DEBUG] ANSCI submissions doc count:", ansciSnap.size);
 
-      for (const studentDoc of ansciSnap.docs) {
-        const data = studentDoc.data() || {};
+      for (const docSnap of ansciSnap.docs) {
+        const data = docSnap.data() || {};
 
-        const rawName =
-          data.Name ??
-          data.name ??
-          "Unknown";
-
+        const rawName = data.Name ?? data.name ?? "Unknown";
         const rawCourse =
-          data.Course ??
-          data.course ??
-          "Animal Science Final Exam";
-
+          data.Course ?? data.course ?? "Animal Science Final Exam";
         const rawSection =
-          data.Section ??
-          data.section ??
-          "—";
-
-        const rawScore =
-          data.Score ??
-          data.score ??
-          "0";
-
-        const answers = Array.isArray(data.answers) ? data.answers : [];
+          data.Section ?? data.section ?? "—";
+        const rawScore = data.Score;
 
         const course = normalizeCourseName(rawCourse);
-        const name   = rawName;
-        const section= rawSection || "—";
-        const score  = typeof rawScore === "number"
-          ? rawScore
-          : parseFloat(rawScore || "0") || 0;
+        const name = rawName;
+        const section = rawSection || "—";
+        const score =
+          typeof rawScore === "number"
+            ? rawScore
+            : parseFloat(rawScore ?? "0") || 0;
 
         records.push({
           course,
           section,
           name,
           score,
-          submissionId: studentDoc.id,
-          attemptId: null,
-          attemptData: { ...data, answers }
+          attemptData: data,
+          source: "ANSCI"
         });
       }
+
+      return records;
     }
 
     async function loadData() {
       try {
         console.log("[DEBUG] loadData() started");
         setStatus("Loading data from Firestore…");
-        const records = [];
 
-        await loadFromKZ(records);
-        await loadFromANSCI(records);
+        const [kzRecords, ansciRecords] = await Promise.all([
+          loadKZRecords(),
+          loadANSCIRecords()
+        ]);
 
-        console.log("[DEBUG] total records gathered (all courses):", records.length);
+        const records = [...kzRecords, ...ansciRecords];
+
+        console.log("[DEBUG] total records gathered:", records.length);
 
         if (!records.length) {
           setStatus("No data found.", false);
@@ -679,7 +601,7 @@
           return;
         }
 
-        buildAccordion(records);
+        buildCourseTables(records);
         setStatus("Data loaded.");
         lastUpdatedEl.textContent = "Last updated: " + formatTimestamp();
       } catch (err) {
@@ -688,151 +610,104 @@
       }
     }
 
-    function groupByCourseAndSection(records) {
+    function groupByCourse(records) {
       const map = {};
       for (const r of records) {
         if (!map[r.course]) {
-          map[r.course] = {};
+          map[r.course] = [];
         }
-        if (!map[r.course][r.section]) {
-          map[r.course][r.section] = [];
-        }
-        map[r.course][r.section].push(r);
+        map[r.course].push(r);
       }
       return map;
     }
 
-    function buildAccordion(records) {
-      const grouped = groupByCourseAndSection(records);
-
+    function buildCourseTables(records) {
+      const grouped = groupByCourse(records);
       dataContainer.innerHTML = "";
       allRows = [];
-      let globalRowCount = 0;
+      let total = 0;
 
       const sortedCourses = Object.keys(grouped).sort((a, b) =>
         a.localeCompare(b)
       );
 
-      for (const course of sortedCourses) {
-        const courseSections = grouped[course];
-        const courseBlock = document.createElement("details");
+      sortedCourses.forEach((courseName) => {
+        const rows = grouped[courseName];
+
+        const courseBlock = document.createElement("section");
         courseBlock.className = "course-block";
 
-        const totalInCourse = Object.values(courseSections).reduce(
-          (sum, arr) => sum + arr.length,
-          0
-        );
+        const header = document.createElement("div");
+        header.className = "course-header";
 
-        const courseSummary = document.createElement("summary");
-        courseSummary.innerHTML = `
-          <div class="summary-main">
-            <span class="label">${course}</span>
-            <span class="meta">Sections: ${
-              Object.keys(courseSections).length
-            } • Records: ${totalInCourse}</span>
-          </div>
-          <span class="summary-chevron">▶</span>
+        const title = document.createElement("div");
+        title.className = "course-title";
+        title.textContent = courseName;
+
+        const meta = document.createElement("div");
+        meta.className = "course-meta";
+        meta.textContent = `Records: ${rows.length}`;
+
+        header.appendChild(title);
+        header.appendChild(meta);
+        courseBlock.appendChild(header);
+
+        const tableWrap = document.createElement("div");
+        tableWrap.className = "table-wrap";
+
+        const table = document.createElement("table");
+        const thead = document.createElement("thead");
+        thead.innerHTML = `
+          <tr>
+            <th>Name</th>
+            <th>Section</th>
+            <th>Score</th>
+            <th>Actions</th>
+          </tr>
         `;
-        courseBlock.appendChild(courseSummary);
+        table.appendChild(thead);
 
-        const sectionAccordion = document.createElement("div");
-        sectionAccordion.className = "accordion";
+        const tbody = document.createElement("tbody");
 
-        const sortedSections = Object.keys(courseSections).sort((a, b) =>
-          a.localeCompare(b)
-        );
+        rows.forEach((r) => {
+          const tr = document.createElement("tr");
+          tr.dataset.name = (r.name || "").toLowerCase();
+          tr.dataset.course = (r.course || "").toLowerCase();
+          tr.dataset.section = (r.section || "").toLowerCase();
 
-        for (const section of sortedSections) {
-          const rows = courseSections[section];
-          const sectionBlock = document.createElement("details");
-          sectionBlock.className = "section-block";
+          const tdName = document.createElement("td");
+          tdName.textContent = r.name;
 
-          const sectionLabel = section === "—" ? "No Section" : section;
+          const tdSection = document.createElement("td");
+          tdSection.textContent = r.section || "—";
 
-          const sectionSummary = document.createElement("summary");
-          sectionSummary.innerHTML = `
-            <div class="summary-main">
-              <span class="label">Section ${sectionLabel}</span>
-              <span class="meta">Records: ${rows.length}</span>
-            </div>
-            <span class="summary-chevron">▶</span>
-          `;
-          sectionBlock.appendChild(sectionSummary);
+          const tdScore = document.createElement("td");
+          tdScore.textContent = isNaN(r.score) ? "-" : r.score;
 
-          const inner = document.createElement("div");
-          inner.className = "section-inner";
-          inner.innerHTML = `
-            <div class="section-caption">
-              Use the search box above to filter by name, course, or section.
-            </div>
-          `;
+          const tdActions = document.createElement("td");
+          const btn = document.createElement("button");
+          btn.className = "download-btn";
+          btn.textContent = "Download PDF";
+          btn.addEventListener("click", () => buildPdfForRecord(r));
+          tdActions.appendChild(btn);
 
-          const tableWrap = document.createElement("div");
-          tableWrap.className = "table-wrap";
+          tr.appendChild(tdName);
+          tr.appendChild(tdSection);
+          tr.appendChild(tdScore);
+          tr.appendChild(tdActions);
 
-          const table = document.createElement("table");
-          const thead = document.createElement("thead");
-          thead.innerHTML = `
-            <tr>
-              <th>Name</th>
-              <th>Course</th>
-              <th>Section</th>
-              <th>Score</th>
-              <th>Actions</th>
-            </tr>
-          `;
-          table.appendChild(thead);
+          tbody.appendChild(tr);
+          allRows.push(tr);
+          total++;
+        });
 
-          const tbody = document.createElement("tbody");
-
-          rows.forEach((r) => {
-            const tr = document.createElement("tr");
-            tr.dataset.name = (r.name || "").toLowerCase();
-            tr.dataset.course = (r.course || "").toLowerCase();
-            tr.dataset.section = (r.section || "").toLowerCase();
-
-            const tdName = document.createElement("td");
-            tdName.textContent = r.name;
-
-            const tdCourse = document.createElement("td");
-            tdCourse.textContent = r.course;
-
-            const tdSection = document.createElement("td");
-            tdSection.textContent = r.section || "—";
-
-            const tdScore = document.createElement("td");
-            tdScore.textContent = isNaN(r.score) ? "-" : r.score;
-
-            const tdActions = document.createElement("td");
-            const btn = document.createElement("button");
-            btn.className = "download-btn";
-            btn.textContent = "Download PDF";
-            btn.addEventListener("click", () => buildPdfForRecord(r));
-            tdActions.appendChild(btn);
-
-            tr.appendChild(tdName);
-            tr.appendChild(tdCourse);
-            tr.appendChild(tdSection);
-            tr.appendChild(tdScore);
-            tr.appendChild(tdActions);
-
-            tbody.appendChild(tr);
-            allRows.push(tr);
-            globalRowCount++;
-          });
-
-          table.appendChild(tbody);
-          tableWrap.appendChild(table);
-          inner.appendChild(tableWrap);
-          sectionBlock.appendChild(inner);
-          sectionAccordion.appendChild(sectionBlock);
-        }
-
-        courseBlock.appendChild(sectionAccordion);
+        table.appendChild(tbody);
+        tableWrap.appendChild(table);
+        courseBlock.appendChild(tableWrap);
         dataContainer.appendChild(courseBlock);
-      }
+      });
 
-      rowCountEl.textContent = globalRowCount.toString();
+      rowCountEl.textContent = total.toString();
     }
 
     function applySearchFilter(query) {
